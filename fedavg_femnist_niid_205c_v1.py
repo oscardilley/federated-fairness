@@ -35,7 +35,7 @@ print(
 )
 
 # Key parameter and data storage variables:
-NUM_CLIENTS = 205
+NUM_CLIENTS = 100
 LOCAL_EPOCHS = 5
 NUM_ROUNDS = 30
 BATCH_SIZE = 32
