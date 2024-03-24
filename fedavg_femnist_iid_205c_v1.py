@@ -1,5 +1,7 @@
 """
-need to make a general format for the docstring
+fedavg_femnist_iid
+
+Runs a flower fairness simulation with the configurable options shown below.
 """
 # Library imports
 from collections import OrderedDict
