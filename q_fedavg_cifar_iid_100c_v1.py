@@ -1,5 +1,5 @@
 """
-fedavg_femnist_niid
+fedavg_cifar_iid
 
 Runs a flower fairness simulation with the configurable options shown below.
 """
@@ -12,7 +12,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
-from torchvision.datasets import EMNIST
+from torchvision.datasets import CIFAR10
 from torch.utils.data import DataLoader, random_split
 import random
 from matplotlib import pyplot as plt
@@ -24,10 +24,9 @@ import time
 start = time.perf_counter()
 import flwr as fl
 from flwr.common import Metrics
-import pickle
 # User defined module imports:
 from source.shapley import Shapley
-from source.femnist_net import Net, train, test
+from source.cifar_net import Net, train, test
 from source.client import FlowerClient, DEVICE, get_parameters, set_parameters
 
 print(
@@ -35,13 +34,13 @@ print(
 )
 
 # Key parameter and data storage variables:
-NUM_CLIENTS = 205
+NUM_CLIENTS = 100
 LOCAL_EPOCHS = 5
 NUM_ROUNDS = 30
 BATCH_SIZE = 32
-SELECTION_RATE = 0.025 # what proportion of clients are selected per round
+SELECTION_RATE = 0.05 # what proportion of clients are selected per round
 SENSITIVE_ATTRIBUTES = [0,1,2,3,4,5,6,7,8,9] # digits are the senstive labels
-path_extension = f'FedAvg_FEMNIST_niid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
+path_extension = f'FedAvg_CIFAR_iid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {
     "rounds": [],
     "general_fairness": {
@@ -153,15 +152,42 @@ def fit_callback(metrics: List[Tuple[int, Metrics]]) -> Metrics:
 
     return {"f_j": f_j, "f_g": f_g, "f_r": f_r, "f_o": f_o}
 
+def load_datasets(num_clients: int):
+    # Download and transform CIFAR-10 (train and test)
+    transform = transforms.Compose(
+        [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+    )
+    trainset = CIFAR10("./cifar", train=True, download=True, transform=transform)
+    testset = CIFAR10("./cifar", train=False, download=True, transform=transform)
+    labels = trainset.classes
+
+    # Split training set into `num_clients` partitions to simulate different local datasets
+    partition_size = len(trainset) // num_clients
+    lengths = [partition_size] * num_clients
+    datasets = random_split(trainset, lengths, torch.Generator().manual_seed(42)) # manual seed defines the pseudo random generator
+    # Split each partition into train/val and create DataLoader
+    trainloaders = []
+    valloaders = []
+    for ds in datasets:
+        len_val = len(ds) // 10  # 10 % validation set
+        len_train = len(ds) - len_val
+        lengths = [len_train, len_val]
+        ds_train, ds_val = random_split(ds, lengths, torch.Generator().manual_seed(42))
+        trainloaders.append(DataLoader(ds_train, batch_size=BATCH_SIZE, shuffle=True))
+        valloaders.append(DataLoader(ds_val, batch_size=BATCH_SIZE))
+    testloader = DataLoader(testset, batch_size=BATCH_SIZE)
+
+    return trainloaders, valloaders, testloader, labels
+
 
 # Gathering the data:
-with open("./femnist/femnist_niid_loaded.pickle", "rb") as file:
-  femnist_dataset = pickle.load(file)
-trainloaders, valloaders, testloader = femnist_dataset["train"], femnist_dataset["val"], femnist_dataset["test"]
+trainloaders, valloaders, testloader, _ = load_datasets(NUM_CLIENTS)
 # Creating Shapley instance:
 shap = Shapley(testloader, test, set_parameters, NUM_CLIENTS, Net().to(DEVICE))
 # Create FedAvg strategy:
-strategy = fl.server.strategy.FedAvg(
+strategy = fl.server.strategy.QFedAvg(
+    q_param = 0.2,
+    qffl_learning_rate= 0.1,
     fraction_fit=SELECTION_RATE, # sample all clients for training
     fraction_evaluate=0.0, # Disabling federated evaluation
     min_fit_clients=int(NUM_CLIENTS*SELECTION_RATE), # never sample less that this for training
@@ -192,4 +218,4 @@ fl.simulation.start_simulation(
 # Saving data:
 with open('./Results/'+ path_extension + '.json', "w") as outfile:
   data = json.dump(data, outfile)
-print(f"Elapsed time = {timedelta(seconds=time.perf_counter()-start)}")
+print(f"Elapsed time = {timedelta(seconds=time.perf_counter() - start)}")

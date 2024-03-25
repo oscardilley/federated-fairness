@@ -161,7 +161,9 @@ trainloaders, valloaders, testloader = femnist_dataset["train"], femnist_dataset
 # Creating Shapley instance:
 shap = Shapley(testloader, test, set_parameters, NUM_CLIENTS, Net().to(DEVICE))
 # Create FedAvg strategy:
-strategy = fl.server.strategy.FedAvg(
+strategy = fl.server.strategy.QFedAvg(
+    q_param = 0.2,
+    qffl_learning_rate= 0.1,
     fraction_fit=SELECTION_RATE, # sample all clients for training
     fraction_evaluate=0.0, # Disabling federated evaluation
     min_fit_clients=int(NUM_CLIENTS*SELECTION_RATE), # never sample less that this for training
