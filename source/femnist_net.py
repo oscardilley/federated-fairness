@@ -59,8 +59,9 @@ def set_parameters(net, parameters: List[np.ndarray]):
     state_dict = OrderedDict({k: torch.Tensor(v) for k, v in params_dict})
     net.load_state_dict(state_dict, strict=True)
 
-def train(net, trainloader, epochs: int):
+def train(net, trainloader, epochs: int, option = None):
     """Train the network on the training set."""
+    ditto_update = lambda p, lr, grad, lam, pers, glob: p - lr*(grad + (lam *(pers - glob)))
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(net.parameters())
     net.train()
@@ -76,7 +77,29 @@ def train(net, trainloader, epochs: int):
             outputs = net(images)
             loss = criterion(net(images), labels.long())
             loss.backward()
-            optimizer.step()
+            if option is not None:
+                if option["opt"] == "ditto":
+                    # Ditto regularisation
+                    #print(f"Per Params are of type {type(option["per_params"])} and have size {option["per_params"].size()}")
+                    #print(f"Params are of type {type(option["params"])} and have size {option["params"].size()}")
+                    # might need to flatten, and reshape
+                    # might need to form state dict like in set_parameters
+                    # https://discuss.pytorch.org/t/updatation-of-parameters-without-using-optimizer-step/34244/15
+                    
+                    reg_term = option["lambda"]*(np.array(option["per_params"]) - np.array(option["params"]))
+
+                    # Learning rate should be accounted for elsewhere
+                    with torch.no_grad():
+                        for p in model.parameters():
+                            # how do we get the correct params etc 
+                            # is the personal the same as in the model?
+                            new_p = ditto_update(p, , p.grad, , ,)
+                            p.copy_(new_p)
+                else:
+                    optimizer.step()
+
+            
+        
             # Metrics
             epoch_loss += loss
             total += length

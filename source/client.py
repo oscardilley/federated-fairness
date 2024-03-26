@@ -29,6 +29,8 @@ class FlowerClient(fl.client.NumPyClient):
         self.valloader = valloader
         self.test = test_function
         self.train = train_function
+        self.per_params = None
+        self.participation_flag = False
 
     def get_parameters(self, config):
         print(f"[Client {self.cid}] get_parameters")
@@ -40,18 +42,36 @@ class FlowerClient(fl.client.NumPyClient):
         server_round = config["server_round"]
         local_epochs = config["local_epochs"]
         sensitive_attributes = config["sensitive_attributes"]
+        if not self.participation_flag:
+            if "ditto" in config: # Initialising personalised params to be global
+                self.per_params = parameters
+            self.participation_flag = True
         print(f"[Client {self.cid}, round {server_round}] fit, config: {config}")
         set_parameters(self.net, parameters)
         _, reward, _ = self.test(self.net, self.valloader, []) # The reward is defined as the accuracy of the model on the central data
         self.train(self.net, self.trainloader, epochs=local_epochs)
+        params = get_parameters(self.net)
+        # Detecting if ditto personalisation strategy is used:
+        if "ditto" in config:
+            ditto_parameters = config["ditto"]
+            # Need to somehow store local params which need to be set to global in round 1
+            self.train(self.net, self.trainloader, epochs=ditto_parameters["s"], option={"opt": "ditto",
+                                                                                               "lambda": np.array(ditto_parameters["lambda"]),
+                                                                                               "params": np.array(params),
+                                                                                               "per_params": self.per_params})                                                             
+            # Updating personalised params:
+            self.per_params = get_parameters(self.net)
+            print("Now performing personalised evaluation")
+            set_parameters(self.net, self.per_params) # redundant but shown for clarity
+        else:
+            set_parameters(self.net, params) # getting end of training round accuracy
         # Performing federated evaluation on the clients that are sampled for training:
         print(f"[Client {self.cid}] evaluate, config: {config}")
-        set_parameters(self.net, get_parameters(self.net)) # getting end of training round accuracy
         loss, accuracy, group_eod = self.test(self.net, self.valloader, sensitive_attributes)
         # Need to process the EOD data here to determine group fairness:
         group_fairness = dict(zip(sensitive_attributes, group_eod))
         # Can include enhanced processing to show which groups are not performing well (eop's further from zero)
-        return get_parameters(self.net), len(self.trainloader), {"cid":int(self.cid), "parameters": get_parameters(self.net), "accuracy": float(accuracy), "loss": float(loss), "group_fairness": group_fairness, "reward": float(reward)}
+        return params, len(self.trainloader), {"cid":int(self.cid), "parameters": params, "accuracy": float(accuracy), "loss": float(loss), "group_fairness": group_fairness, "reward": float(reward)}
 
 def get_parameters(net) -> List[np.ndarray]:
     # taking state_dict values to numpy (state_dict holds learnable parameters)

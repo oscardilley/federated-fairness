@@ -174,7 +174,8 @@ strategy = fl.server.strategy.FedAvg(
     # Evaluate function is called by flower every round for central evaluation:
     evaluate_fn=evaluate,
     # Altering client behaviour with the config dictionary:
-    on_fit_config_fn=fit_config
+    on_fit_config_fn=fit_config,
+    accept_failures = False
 )
 # Specifying client resources:
 client_resources = None # {"num_cpus": 1, "num_gpus": 0.0}

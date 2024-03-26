@@ -1,5 +1,5 @@
 """
-fedavg_femnist_iid
+fedavg_femnist_niid
 
 Runs a flower fairness simulation with the configurable options shown below.
 """
@@ -29,6 +29,7 @@ import pickle
 from source.shapley import Shapley
 from source.femnist_net import Net, train, test
 from source.client import FlowerClient, DEVICE, get_parameters, set_parameters
+from source.ditto import Ditto
 
 print(
     f"Training on {DEVICE} using PyTorch {torch.__version__} and Flower {fl.__version__}"
@@ -41,7 +42,7 @@ NUM_ROUNDS = 30
 BATCH_SIZE = 32
 SELECTION_RATE = 0.025 # what proportion of clients are selected per round
 SENSITIVE_ATTRIBUTES = [0,1,2,3,4,5,6,7,8,9] # digits are the senstive labels
-path_extension = f'FedAvg_FEMNIST_iid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
+path_extension = f'FedAvg_FEMNIST_niid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {
     "rounds": [],
     "general_fairness": {
@@ -61,6 +62,9 @@ data = {
             "accuracy": [],
             "avg_eop": [],
             "gains": []}}
+
+# FOR FURTHER TIDY UP, COULD PUT ALL BELOW FUNCTIONS IN A CLASS
+# AND INITIALISE WITH EVERYTHING THEY NEED
 
 # Key experiment specific functions:
 def client_fn(cid) -> FlowerClient:
@@ -155,13 +159,16 @@ def fit_callback(metrics: List[Tuple[int, Metrics]]) -> Metrics:
 
 
 # Gathering the data:
-with open("./femnist/femnist_iid_loaded.pickle", "rb") as file:
+with open("./femnist/femnist_niid_loaded.pickle", "rb") as file:
   femnist_dataset = pickle.load(file)
 trainloaders, valloaders, testloader = femnist_dataset["train"], femnist_dataset["val"], femnist_dataset["test"]
 # Creating Shapley instance:
 shap = Shapley(testloader, test, set_parameters, NUM_CLIENTS, Net().to(DEVICE))
 # Create FedAvg strategy:
-strategy = fl.server.strategy.FedAvg(
+strategy = Ditto(
+
+    ditto_lambda = 1, # Recommended value from paper for FEMNIST with no malicious clients, it can be selected locally or tuned
+    ditto_s = 5, # the number of personalised fitting epochs
     fraction_fit=SELECTION_RATE, # sample all clients for training
     fraction_evaluate=0.0, # Disabling federated evaluation
     min_fit_clients=int(NUM_CLIENTS*SELECTION_RATE), # never sample less that this for training
