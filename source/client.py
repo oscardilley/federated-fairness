@@ -25,6 +25,7 @@ class FlowerClient(fl.client.NumPyClient):
     def __init__(self, cid, net, trainloader, valloader, test_function, train_function):
         self.cid = cid
         self.net = net
+        self.temp = net # used for data formatting in ditto implementation, not trained
         self.trainloader = trainloader
         self.valloader = valloader
         self.test = test_function
@@ -54,15 +55,16 @@ class FlowerClient(fl.client.NumPyClient):
         # Detecting if ditto personalisation strategy is used:
         if "ditto" in config:
             ditto_parameters = config["ditto"]
+            set_parameters(self.temp, parameters) # so that that parameters are tensor not numpy
+            global_params = self.temp.parameters()
             # Need to somehow store local params which need to be set to global in round 1
+            set_parameters(self.net, self.per_params)
             self.train(self.net, self.trainloader, epochs=ditto_parameters["s"], option={"opt": "ditto",
-                                                                                               "lambda": np.array(ditto_parameters["lambda"]),
-                                                                                               "params": np.array(params),
-                                                                                               "per_params": self.per_params})                                                             
+                                                                                         "lambda": ditto_parameters["lambda"],
+                                                                                         "eta": ditto_parameters["eta"],
+                                                                                         "global_params": global_params})                                                             
             # Updating personalised params:
             self.per_params = get_parameters(self.net)
-            print("Now performing personalised evaluation")
-            set_parameters(self.net, self.per_params) # redundant but shown for clarity
         else:
             set_parameters(self.net, params) # getting end of training round accuracy
         # Performing federated evaluation on the clients that are sampled for training:

@@ -53,7 +53,7 @@ class Ditto(Strategy):
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         inplace: bool = True,
-        ditto_eta = 0.1,
+        ditto_eta = 0.001,
         ditto_lambda = 0.1,
         ditto_s = 5,
     ) -> None:
@@ -124,11 +124,8 @@ class Ditto(Strategy):
     ) -> List[Tuple[ClientProxy, FitIns]]:
         """Configure the next round of training."""
         ditto_parameters = {"lambda": self.ditto_lambda,
+                            "eta": self.ditto_eta,
                             "s": self.ditto_s
-
-                            # Need to somehow figure out how to store the clients personalised params
-                            # should do this in the client
-
                             }
         if self.on_fit_config_fn is not None:
             # Custom fit config function provided

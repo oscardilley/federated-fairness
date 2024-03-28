@@ -168,6 +168,7 @@ shap = Shapley(testloader, test, set_parameters, NUM_CLIENTS, Net().to(DEVICE))
 strategy = Ditto(
 
     ditto_lambda = 1, # Recommended value from paper for FEMNIST with no malicious clients, it can be selected locally or tuned
+    ditto_eta = 0.001,
     ditto_s = 5, # the number of personalised fitting epochs
     fraction_fit=SELECTION_RATE, # sample all clients for training
     fraction_evaluate=0.0, # Disabling federated evaluation
