@@ -153,8 +153,9 @@ def fit_callback(metrics: List[Tuple[int, Metrics]]) -> Metrics:
 
     return {"f_j": f_j, "f_g": f_g, "f_r": f_r, "f_o": f_o}
 
+
 # Gathering the data:
-trainloaders, valloaders, testloader, _ = load_iid(NUM_CLIENTS, BATCH_SIZE)
+trainloaders, valloaders, testloader, _ = load_niid(NUM_CLIENTS, BATCH_SIZE)
 # Creating Shapley instance:
 shap = Shapley(testloader, test, set_parameters, NUM_CLIENTS, Net().to(DEVICE))
 # Create FedAvg strategy:

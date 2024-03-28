@@ -28,6 +28,7 @@ from flwr.common import Metrics
 from source.shapley import Shapley
 from source.cifar_net import Net, train, test
 from source.client import FlowerClient, DEVICE, get_parameters, set_parameters
+from source.load_cifar import load_niid, load_iid
 
 print(
     f"Training on {DEVICE} using PyTorch {torch.__version__} and Flower {fl.__version__}"
@@ -35,7 +36,7 @@ print(
 
 # Key parameter and data storage variables:
 NUM_CLIENTS = 100
-LOCAL_EPOCHS = 5
+LOCAL_EPOCHS = 10
 NUM_ROUNDS = 30
 BATCH_SIZE = 32
 SELECTION_RATE = 0.05 # what proportion of clients are selected per round
@@ -152,36 +153,10 @@ def fit_callback(metrics: List[Tuple[int, Metrics]]) -> Metrics:
 
     return {"f_j": f_j, "f_g": f_g, "f_r": f_r, "f_o": f_o}
 
-def load_datasets(num_clients: int):
-    # Download and transform CIFAR-10 (train and test)
-    transform = transforms.Compose(
-        [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
-    )
-    trainset = CIFAR10("./cifar", train=True, download=True, transform=transform)
-    testset = CIFAR10("./cifar", train=False, download=True, transform=transform)
-    labels = trainset.classes
-
-    # Split training set into `num_clients` partitions to simulate different local datasets
-    partition_size = len(trainset) // num_clients
-    lengths = [partition_size] * num_clients
-    datasets = random_split(trainset, lengths, torch.Generator().manual_seed(42)) # manual seed defines the pseudo random generator
-    # Split each partition into train/val and create DataLoader
-    trainloaders = []
-    valloaders = []
-    for ds in datasets:
-        len_val = len(ds) // 10  # 10 % validation set
-        len_train = len(ds) - len_val
-        lengths = [len_train, len_val]
-        ds_train, ds_val = random_split(ds, lengths, torch.Generator().manual_seed(42))
-        trainloaders.append(DataLoader(ds_train, batch_size=BATCH_SIZE, shuffle=True))
-        valloaders.append(DataLoader(ds_val, batch_size=BATCH_SIZE))
-    testloader = DataLoader(testset, batch_size=BATCH_SIZE)
-
-    return trainloaders, valloaders, testloader, labels
 
 
 # Gathering the data:
-trainloaders, valloaders, testloader, _ = load_datasets(NUM_CLIENTS)
+trainloaders, valloaders, testloader, _ = load_iid(NUM_CLIENTS, BATCH_SIZE)
 # Creating Shapley instance:
 shap = Shapley(testloader, test, set_parameters, NUM_CLIENTS, Net().to(DEVICE))
 # Create FedAvg strategy:

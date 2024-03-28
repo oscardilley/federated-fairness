@@ -56,8 +56,8 @@ def train(net, trainloader, epochs: int):
     net.train()
     for epoch in range(epochs):
         correct, total, epoch_loss = 0, 0, 0.0
-        for images, labels in trainloader:
-            images, labels = images.to(DEVICE), labels.to(DEVICE)
+        for i, data in enumerate(trainloader,0):
+            images, labels = data["img"].to(DEVICE), data["label"].to(DEVICE)
             optimizer.zero_grad()
             outputs = net(images)
             loss = criterion(net(images), labels)
@@ -80,9 +80,9 @@ def test(net, testloader, sensitive_labels=[]):
     # init array for storing EOP information
     net.eval()
     with torch.no_grad():
-        for images, labels in testloader:
+        for i, data in enumerate(testloader, 0):
             # Cycles through in batches, set in data loader as 32
-            images, labels = images.to(DEVICE), labels.to(DEVICE)
+            images, labels = data["img"].to(DEVICE), data["label"].to(DEVICE)
             outputs = net(images)
             loss += criterion(outputs, labels).item()
             _, predicted = torch.max(outputs.data, 1)
@@ -92,7 +92,7 @@ def test(net, testloader, sensitive_labels=[]):
               labelled = (labels == label)
               not_labelled = (labels != label)
               group_performance[label][0] += (matched == labelled).sum()
-              group_performance[label][1] += (matched == labelled).sum()
+              group_performance[label][1] += (matched == not_labelled).sum()
             total += labels.size(0)
             correct += matched.sum().item()
     for index in range(len(group_performance)):

@@ -36,12 +36,12 @@ print(
 
 # Key parameter and data storage variables:
 NUM_CLIENTS = 100
-LOCAL_EPOCHS = 5
+LOCAL_EPOCHS = 10
 NUM_ROUNDS = 30
 BATCH_SIZE = 32
 SELECTION_RATE = 0.05 # what proportion of clients are selected per round
 SENSITIVE_ATTRIBUTES = [0,1,2,3,4,5,6,7,8,9] # digits are the senstive labels
-path_extension = f'q-FedAvg_CIFAR_iid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
+path_extension = f'FedAvg_CIFAR_niid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {
     "rounds": [],
     "general_fairness": {
@@ -154,13 +154,11 @@ def fit_callback(metrics: List[Tuple[int, Metrics]]) -> Metrics:
     return {"f_j": f_j, "f_g": f_g, "f_r": f_r, "f_o": f_o}
 
 # Gathering the data:
-trainloaders, valloaders, testloader, _ = load_iid(NUM_CLIENTS, BATCH_SIZE)
+trainloaders, valloaders, testloader, _ = load_niid(NUM_CLIENTS, BATCH_SIZE)
 # Creating Shapley instance:
 shap = Shapley(testloader, test, set_parameters, NUM_CLIENTS, Net().to(DEVICE))
 # Create FedAvg strategy:
-strategy = fl.server.strategy.QFedAvg(
-    q_param = 0.2,
-    qffl_learning_rate= 0.1,
+strategy = fl.server.strategy.FedAvg(
     fraction_fit=SELECTION_RATE, # sample all clients for training
     fraction_evaluate=0.0, # Disabling federated evaluation
     min_fit_clients=int(NUM_CLIENTS*SELECTION_RATE), # never sample less that this for training

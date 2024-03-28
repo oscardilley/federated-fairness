@@ -1,2 +1,3 @@
-cifar
+cifar_iid
+cifar_niid
 femnist

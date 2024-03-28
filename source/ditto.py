@@ -125,6 +125,10 @@ class Ditto(Strategy):
         """Configure the next round of training."""
         ditto_parameters = {"lambda": self.ditto_lambda,
                             "s": self.ditto_s
+
+                            # Need to somehow figure out how to store the clients personalised params
+                            # should do this in the client
+
                             }
         if self.on_fit_config_fn is not None:
             # Custom fit config function provided
