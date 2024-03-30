@@ -25,46 +25,64 @@ from math import inf
 def load_iid(num_clients, b_size):
     # Download and transform CIFAR-10 (train and test)
     fds = FederatedDataset(dataset="Mireu-Lab/NSL-KDD", partitioners={"train": num_clients})
-    
-    pytorch_transforms = transforms.Compose(
-        [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
-    )
+    testset = fds.load_split("test") # central testset
+    features = testset.features
+    # Grouping the categories by type of transform required:
+    protocols = ['tcp','udp', 'icmp']
+    services = ['aol', 'auth', 'bgp', 'courier', 'csnet_ns', 'ctf', 'daytime', 'discard', 'domain', 'domain_u', 'echo', 'eco_i', 'ecr_i', 'efs', 'exec', 'finger', 'ftp', 'ftp_data', 'gopher', 'harvest', 'hostnames', 'http', 'http_2784', 'http_443', 'http_8001', 'imap4', 'IRC', 'iso_tsap', 'klogin', 'kshell', 'ldap', 'link', 'login', 'mtp', 'name', 'netbios_dgm', 'netbios_ns', 'netbios_ssn', 'netstat', 'nnsp', 'nntp', 'ntp_u', 'other', 'pm_dump', 'pop_2', 'pop_3', 'printer', 'private', 'red_i', 'remote_job', 'rje', 'shell', 'smtp', 'sql_net', 'ssh', 'sunrpc', 'supdup', 'systat', 'telnet', 'tftp_u', 'tim_i', 'time', 'urh_i', 'urp_i', 'uucp', 'uucp_path', 'vmnet', 'whois', 'X11', 'Z39_50']
+    flags = ['OTH', 'REJ', 'RSTO', 'RSTOS0', 'RSTR', 'S0', 'S1', 'S2', 'S3', 'SF', 'SH']
+    categorical = {'protocol_type':protocols, 'service':services, 'flag':flags} # require label or one-hot encoding
+    continuous = list(features.keys()) # require normalisation
+    continuous.remove('class')
+    cont_min_max = {'duration': [0.0, 57715.0], 'src_bytes': [0.0, 1379963888.0], 'dst_bytes': [0.0, 1309937401.0], 'land': [0.0, 1.0], 'wrong_fragment': [0.0, 3.0], 'urgent': [0.0, 3.0], 'hot': [0.0, 101.0], 'num_failed_logins': [0.0, 5.0], 'logged_in': [0.0, 1.0], 'num_compromised': [0.0, 7479.0], 'root_shell': [0.0, 1.0], 'su_attempted': [0.0, 2.0], 'num_root': [0.0, 7468.0], 'num_file_creations': [0.0, 100.0], 'num_shells': [0.0, 5.0], 'num_access_files': [0.0, 9.0], 'num_outbound_cmds': [0.0, 0], 'is_host_login': [0.0, 1.0], 'is_guest_login': [0.0, 1.0], 'count': [0.0, 511.0], 'srv_count': [0.0, 511.0], 'serror_rate': [0.0, 1.0], 'srv_serror_rate': [0.0, 1.0], 'rerror_rate': [0.0, 1.0], 'srv_rerror_rate': [0.0, 1.0], 'same_srv_rate': [0.0, 1.0], 'diff_srv_rate': [0.0, 1.0], 'srv_diff_host_rate': [0.0, 1.0], 'dst_host_count': [0.0, 255.0], 'dst_host_srv_count': [0.0, 255.0], 'dst_host_same_srv_rate': [0.0, 1.0], 'dst_host_diff_srv_rate': [0.0, 1.0], 'dst_host_same_src_port_rate': [0.0, 1.0], 'dst_host_srv_diff_host_rate': [0.0, 1.0], 'dst_host_serror_rate': [0.0, 1.0], 'dst_host_srv_serror_rate': [0.0, 1.0], 'dst_host_rerror_rate': [0.0, 1.0], 'dst_host_srv_rerror_rate': [0.0, 1.0]}
+    for i in categorical:
+        continuous.remove(i)
+    label = 'class'
+    classify = lambda x: 0 if x=='normal' else 1 # converted 'normal' to zero and 'abnormal' to 1
 
     def apply_transforms(batch):
         """Apply transforms to the partition from FederatedDataset."""
-        # Significant preprocessing is required
-        # https://medium.com/geekculture/network-intrusion-detection-using-deep-learning-bcc91e9b999d
-        # https://github.com/abhinav-bhardwaj/Network-Intrusion-Detection-Using-Machine-Learning/blob/master/Intrusion_Detection_NSL_KDD.ipynb
+        # Only runs when the data is accessed
         # https://towardsdatascience.com/deep-learning-using-pytorch-for-tabular-data-c68017d8b480
+        print(f"Length of batch {len(batch)}")
+        # One hot encoding
+        data = pd.DataFrame.from_dict(batch)
+        print(data)
+        data_onehot = pd.get_dummies(data, columns=categorical.keys(), prefix="", prefix_sep="")
+        columns = data_onehot.columns.values.tolist()
+        for labels in categorical.values(): # Ensuring all the columns are always there even if all zero
+            for label in labels:
+                if label not in columns:
+                    data_onehot[label] = False
+        # Normalisation of numerical columns:
+        data_normalised = data_onehot.copy()
+        for column in continuous:
+            # need to check for zero case - should be mitigated by global min/max but should do it for good practice
+            data_normalised[column] = ((data_normalised[column] - cont_min_max[column][0]) / (cont_min_max[column][1] - cont_min_max[column][0]))
+        # Fix the label column to be binary 
+        data_preprocessed = data_normalised.copy()
+        data_preprocessed["class"] = [classify(x) for x in data_preprocessed["class"]]
+        output = {key: value for key, value in sorted(data_preprocessed.to_dict(orient="list").items())}
+        return output
 
-        # binary classification for anomolous or not
-
-
-
-
-
-
-        return batch
-
-    testset = fds.load_split("test") # central testset
     testloader = DataLoader(testset.with_transform(apply_transforms), batch_size=b_size)
-    features = testset.features
-
     trainloaders = []
     valloaders = []
     for c in range(num_clients):
         partition = fds.load_partition(c)
-        if c == 1:
-            print(partition_train_test)
         # Divide data on each node: 90% train, 10% validation
         partition_train_test = partition.train_test_split(test_size=0.1)
         partition_train_test = partition_train_test.with_transform(apply_transforms)
         trainloaders.append(DataLoader(partition_train_test["train"], batch_size=b_size, shuffle=True))
         valloaders.append(DataLoader(partition_train_test["test"], batch_size=b_size))
-        if c == 1:
+        if c < 1:
+        # Use to observe heterogeneity of sampling, will need to change after encoding
             data = trainloaders[c]
-            print(next(iter(data)))
+            temp = next(iter(data))["class"]
+            normals = np.sum(np.array(temp) == 0)
+            print(f" Normals = {normals}, Anomoly = {32 - normals}")
     return trainloaders, valloaders, testloader, features
+
 
 def load_niid(num_clients, b_size):
     # Download and transform CIFAR-10 (train and test)
@@ -112,7 +130,6 @@ def load_niid(num_clients, b_size):
         data_preprocessed = data_normalised.copy()
         data_preprocessed["class"] = [classify(x) for x in data_preprocessed["class"]]
         output = {key: value for key, value in sorted(data_preprocessed.to_dict(orient="list").items())}
-        print(output)
         return output
 
     testloader = DataLoader(testset.with_transform(apply_transforms), batch_size=b_size)
@@ -199,5 +216,5 @@ def min_max(num_clients):
     
 
 
-#minmax = min_max(100) # generate the min max value dictionary
-trainloaders, valloaders, testloader, _ = load_niid(100, 32)
+# minmax = min_max(100) # generate the min max value dictionary
+# trainloaders, valloaders, testloader, _ = load_iid(100, 32)
