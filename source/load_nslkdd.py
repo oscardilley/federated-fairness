@@ -35,6 +35,8 @@ def load_iid(num_clients, b_size):
     continuous = list(features.keys()) # require normalisation
     continuous.remove('class')
     cont_min_max = {'duration': [0.0, 57715.0], 'src_bytes': [0.0, 1379963888.0], 'dst_bytes': [0.0, 1309937401.0], 'land': [0.0, 1.0], 'wrong_fragment': [0.0, 3.0], 'urgent': [0.0, 3.0], 'hot': [0.0, 101.0], 'num_failed_logins': [0.0, 5.0], 'logged_in': [0.0, 1.0], 'num_compromised': [0.0, 7479.0], 'root_shell': [0.0, 1.0], 'su_attempted': [0.0, 2.0], 'num_root': [0.0, 7468.0], 'num_file_creations': [0.0, 100.0], 'num_shells': [0.0, 5.0], 'num_access_files': [0.0, 9.0], 'num_outbound_cmds': [0.0, 0], 'is_host_login': [0.0, 1.0], 'is_guest_login': [0.0, 1.0], 'count': [0.0, 511.0], 'srv_count': [0.0, 511.0], 'serror_rate': [0.0, 1.0], 'srv_serror_rate': [0.0, 1.0], 'rerror_rate': [0.0, 1.0], 'srv_rerror_rate': [0.0, 1.0], 'same_srv_rate': [0.0, 1.0], 'diff_srv_rate': [0.0, 1.0], 'srv_diff_host_rate': [0.0, 1.0], 'dst_host_count': [0.0, 255.0], 'dst_host_srv_count': [0.0, 255.0], 'dst_host_same_srv_rate': [0.0, 1.0], 'dst_host_diff_srv_rate': [0.0, 1.0], 'dst_host_same_src_port_rate': [0.0, 1.0], 'dst_host_srv_diff_host_rate': [0.0, 1.0], 'dst_host_serror_rate': [0.0, 1.0], 'dst_host_srv_serror_rate': [0.0, 1.0], 'dst_host_rerror_rate': [0.0, 1.0], 'dst_host_srv_rerror_rate': [0.0, 1.0]}
+    # set 'num_outbound_cmds': [0.0, 1.0] to avoid NaN
+    cont_min_max = {'duration': [0.0, 57715.0], 'src_bytes': [0.0, 1379963888.0], 'dst_bytes': [0.0, 1309937401.0], 'land': [0.0, 1.0], 'wrong_fragment': [0.0, 3.0], 'urgent': [0.0, 3.0], 'hot': [0.0, 101.0], 'num_failed_logins': [0.0, 5.0], 'logged_in': [0.0, 1.0], 'num_compromised': [0.0, 7479.0], 'root_shell': [0.0, 1.0], 'su_attempted': [0.0, 2.0], 'num_root': [0.0, 7468.0], 'num_file_creations': [0.0, 100.0], 'num_shells': [0.0, 5.0], 'num_access_files': [0.0, 9.0], 'num_outbound_cmds': [0.0, 1.0], 'is_host_login': [0.0, 1.0], 'is_guest_login': [0.0, 1.0], 'count': [0.0, 511.0], 'srv_count': [0.0, 511.0], 'serror_rate': [0.0, 1.0], 'srv_serror_rate': [0.0, 1.0], 'rerror_rate': [0.0, 1.0], 'srv_rerror_rate': [0.0, 1.0], 'same_srv_rate': [0.0, 1.0], 'diff_srv_rate': [0.0, 1.0], 'srv_diff_host_rate': [0.0, 1.0], 'dst_host_count': [0.0, 255.0], 'dst_host_srv_count': [0.0, 255.0], 'dst_host_same_srv_rate': [0.0, 1.0], 'dst_host_diff_srv_rate': [0.0, 1.0], 'dst_host_same_src_port_rate': [0.0, 1.0], 'dst_host_srv_diff_host_rate': [0.0, 1.0], 'dst_host_serror_rate': [0.0, 1.0], 'dst_host_srv_serror_rate': [0.0, 1.0], 'dst_host_rerror_rate': [0.0, 1.0], 'dst_host_srv_rerror_rate': [0.0, 1.0]}
     for i in categorical:
         continuous.remove(i)
     label = 'class'
@@ -44,10 +46,8 @@ def load_iid(num_clients, b_size):
         """Apply transforms to the partition from FederatedDataset."""
         # Only runs when the data is accessed
         # https://towardsdatascience.com/deep-learning-using-pytorch-for-tabular-data-c68017d8b480
-        print(f"Length of batch {len(batch)}")
         # One hot encoding
         data = pd.DataFrame.from_dict(batch)
-        print(data)
         data_onehot = pd.get_dummies(data, columns=categorical.keys(), prefix="", prefix_sep="")
         columns = data_onehot.columns.values.tolist()
         for labels in categorical.values(): # Ensuring all the columns are always there even if all zero
@@ -58,6 +58,8 @@ def load_iid(num_clients, b_size):
         data_normalised = data_onehot.copy()
         for column in continuous:
             # need to check for zero case - should be mitigated by global min/max but should do it for good practice
+            if (cont_min_max[column][1] == inf):
+                print("-------------------------NaN error likely - investigate--------------------------------")
             data_normalised[column] = ((data_normalised[column] - cont_min_max[column][0]) / (cont_min_max[column][1] - cont_min_max[column][0]))
         # Fix the label column to be binary 
         data_preprocessed = data_normalised.copy()
@@ -75,12 +77,12 @@ def load_iid(num_clients, b_size):
         partition_train_test = partition_train_test.with_transform(apply_transforms)
         trainloaders.append(DataLoader(partition_train_test["train"], batch_size=b_size, shuffle=True))
         valloaders.append(DataLoader(partition_train_test["test"], batch_size=b_size))
-        if c < 1:
-        # Use to observe heterogeneity of sampling, will need to change after encoding
-            data = trainloaders[c]
-            temp = next(iter(data))["class"]
-            normals = np.sum(np.array(temp) == 0)
-            print(f" Normals = {normals}, Anomoly = {32 - normals}")
+        # if c < 1:
+        # # Use to observe heterogeneity of sampling, will need to change after encoding
+        #     data = trainloaders[c]
+        #     temp = next(iter(data))["class"]
+        #     normals = np.sum(np.array(temp) == 0)
+        #     print(f" Normals = {normals}, Anomoly = {32 - normals}")
     return trainloaders, valloaders, testloader, features
 
 
@@ -101,7 +103,8 @@ def load_niid(num_clients, b_size):
     categorical = {'protocol_type':protocols, 'service':services, 'flag':flags} # require label or one-hot encoding
     continuous = list(features.keys()) # require normalisation
     continuous.remove('class')
-    cont_min_max = {'duration': [0.0, 57715.0], 'src_bytes': [0.0, 1379963888.0], 'dst_bytes': [0.0, 1309937401.0], 'land': [0.0, 1.0], 'wrong_fragment': [0.0, 3.0], 'urgent': [0.0, 3.0], 'hot': [0.0, 101.0], 'num_failed_logins': [0.0, 5.0], 'logged_in': [0.0, 1.0], 'num_compromised': [0.0, 7479.0], 'root_shell': [0.0, 1.0], 'su_attempted': [0.0, 2.0], 'num_root': [0.0, 7468.0], 'num_file_creations': [0.0, 100.0], 'num_shells': [0.0, 5.0], 'num_access_files': [0.0, 9.0], 'num_outbound_cmds': [0.0, 0], 'is_host_login': [0.0, 1.0], 'is_guest_login': [0.0, 1.0], 'count': [0.0, 511.0], 'srv_count': [0.0, 511.0], 'serror_rate': [0.0, 1.0], 'srv_serror_rate': [0.0, 1.0], 'rerror_rate': [0.0, 1.0], 'srv_rerror_rate': [0.0, 1.0], 'same_srv_rate': [0.0, 1.0], 'diff_srv_rate': [0.0, 1.0], 'srv_diff_host_rate': [0.0, 1.0], 'dst_host_count': [0.0, 255.0], 'dst_host_srv_count': [0.0, 255.0], 'dst_host_same_srv_rate': [0.0, 1.0], 'dst_host_diff_srv_rate': [0.0, 1.0], 'dst_host_same_src_port_rate': [0.0, 1.0], 'dst_host_srv_diff_host_rate': [0.0, 1.0], 'dst_host_serror_rate': [0.0, 1.0], 'dst_host_srv_serror_rate': [0.0, 1.0], 'dst_host_rerror_rate': [0.0, 1.0], 'dst_host_srv_rerror_rate': [0.0, 1.0]}
+    # set 'num_outbound_cmds': [0.0, 1.0] to avoid NaN
+    cont_min_max = {'duration': [0.0, 57715.0], 'src_bytes': [0.0, 1379963888.0], 'dst_bytes': [0.0, 1309937401.0], 'land': [0.0, 1.0], 'wrong_fragment': [0.0, 3.0], 'urgent': [0.0, 3.0], 'hot': [0.0, 101.0], 'num_failed_logins': [0.0, 5.0], 'logged_in': [0.0, 1.0], 'num_compromised': [0.0, 7479.0], 'root_shell': [0.0, 1.0], 'su_attempted': [0.0, 2.0], 'num_root': [0.0, 7468.0], 'num_file_creations': [0.0, 100.0], 'num_shells': [0.0, 5.0], 'num_access_files': [0.0, 9.0], 'num_outbound_cmds': [0.0, 1.0], 'is_host_login': [0.0, 1.0], 'is_guest_login': [0.0, 1.0], 'count': [0.0, 511.0], 'srv_count': [0.0, 511.0], 'serror_rate': [0.0, 1.0], 'srv_serror_rate': [0.0, 1.0], 'rerror_rate': [0.0, 1.0], 'srv_rerror_rate': [0.0, 1.0], 'same_srv_rate': [0.0, 1.0], 'diff_srv_rate': [0.0, 1.0], 'srv_diff_host_rate': [0.0, 1.0], 'dst_host_count': [0.0, 255.0], 'dst_host_srv_count': [0.0, 255.0], 'dst_host_same_srv_rate': [0.0, 1.0], 'dst_host_diff_srv_rate': [0.0, 1.0], 'dst_host_same_src_port_rate': [0.0, 1.0], 'dst_host_srv_diff_host_rate': [0.0, 1.0], 'dst_host_serror_rate': [0.0, 1.0], 'dst_host_srv_serror_rate': [0.0, 1.0], 'dst_host_rerror_rate': [0.0, 1.0], 'dst_host_srv_rerror_rate': [0.0, 1.0]}
     for i in categorical:
         continuous.remove(i)
     label = 'class'
@@ -111,10 +114,8 @@ def load_niid(num_clients, b_size):
         """Apply transforms to the partition from FederatedDataset."""
         # Only runs when the data is accessed
         # https://towardsdatascience.com/deep-learning-using-pytorch-for-tabular-data-c68017d8b480
-        print(f"Length of batch {len(batch)}")
         # One hot encoding
         data = pd.DataFrame.from_dict(batch)
-        print(data)
         data_onehot = pd.get_dummies(data, columns=categorical.keys(), prefix="", prefix_sep="")
         columns = data_onehot.columns.values.tolist()
         for labels in categorical.values(): # Ensuring all the columns are always there even if all zero
@@ -125,6 +126,8 @@ def load_niid(num_clients, b_size):
         data_normalised = data_onehot.copy()
         for column in continuous:
             # need to check for zero case - should be mitigated by global min/max but should do it for good practice
+            if (cont_min_max[column][1] == inf):
+                print("-------------------------NaN error likely - investigate--------------------------------")
             data_normalised[column] = ((data_normalised[column] - cont_min_max[column][0]) / (cont_min_max[column][1] - cont_min_max[column][0]))
         # Fix the label column to be binary 
         data_preprocessed = data_normalised.copy()
@@ -142,12 +145,12 @@ def load_niid(num_clients, b_size):
         partition_train_test = partition_train_test.with_transform(apply_transforms)
         trainloaders.append(DataLoader(partition_train_test["train"], batch_size=b_size, shuffle=True))
         valloaders.append(DataLoader(partition_train_test["test"], batch_size=b_size))
-        if c < 1:
-        # Use to observe heterogeneity of sampling, will need to change after encoding
-            data = trainloaders[c]
-            temp = next(iter(data))["class"]
-            normals = np.sum(np.array(temp) == 0)
-            print(f" Normals = {normals}, Anomoly = {32 - normals}")
+        # if c < 1:
+        # # Use to observe heterogeneity of sampling, will need to change after encoding
+        #     data = trainloaders[c]
+        #     temp = next(iter(data))["class"]
+        #     normals = np.sum(np.array(temp) == 0)
+        #     print(f" Normals = {normals}, Anomoly = {32 - normals}")
     return trainloaders, valloaders, testloader, features
 
 def min_max(num_clients):
@@ -217,4 +220,4 @@ def min_max(num_clients):
 
 
 # minmax = min_max(100) # generate the min max value dictionary
-# trainloaders, valloaders, testloader, _ = load_iid(100, 32)
+trainloaders, valloaders, testloader, _ = load_niid(100, 32)

@@ -20,6 +20,7 @@ from flwr.common import Metrics
 
 # Simulation configuration
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+#DEVICE = torch.device("cpu") # use for debugging when RuntimeError: CUDA error: device-side assert triggered
 
 class FlowerClient(fl.client.NumPyClient):
     def __init__(self, cid, net, trainloader, valloader, test_function, train_function):

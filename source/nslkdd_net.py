@@ -18,12 +18,26 @@ from flwr.common import Metrics
 from .client import DEVICE
 
 class Net(nn.Module):
+    # Inspired by https://machinelearningmastery.com/building-a-binary-classification-model-in-pytorch/ 
     def __init__(self) -> None:
         super(Net, self).__init__() # Calls init method of Net superclass (nn.Module) enabling access to nn
+        # Needs to start with input space as wide as preprocessed inputs, 123 wide including the class label
+        self.layer1 = nn.Linear(122, 122, dtype=torch.float64)
+        self.act1 = nn.ReLU()
+        self.layer2 = nn.Linear(122, 122, dtype=torch.float64)
+        self.act2 = nn.ReLU()
+        self.layer3 = nn.Linear(122, 122, dtype=torch.float64)
+        self.act3 = nn.ReLU()
+        self.output = nn.Linear(122, 1, dtype=torch.float64)
+        self.sigmoid = nn.Sigmoid()
+        # Needs to end with 1 for binary classification
 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor: # -> is an annotation for function output
-
+        x = self.act1(self.layer1(x))
+        x = self.act2(self.layer2(x))
+        x = self.act3(self.layer3(x))
+        x = self.sigmoid(self.output(x))
         return x
 
 
@@ -46,11 +60,14 @@ def train(net, trainloader, epochs: int):
     net.train()
     for epoch in range(epochs):
         correct, total, epoch_loss = 0, 0, 0.0
-        for i, data in enumerate(trainloader,0):
-            images, labels = data["img"].to(DEVICE), data["label"].to(DEVICE)
+        for data in trainloader:
+            labels = (torch.Tensor([[x] for x in data["class"]]).float()).to(DEVICE)
+            data.pop("class")
+            inputs = torch.from_numpy(np.array([values.numpy() for key,values in data.items()], dtype=float)).to(DEVICE)
+            inputs = inputs.mT # transpose required
             optimizer.zero_grad()
-            outputs = net(images)
-            loss = criterion(net(images), labels)
+            outputs = net(inputs)
+            loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
             # Metrics
@@ -70,10 +87,12 @@ def test(net, testloader, sensitive_labels=[]):
     # init array for storing EOP information
     net.eval()
     with torch.no_grad():
-        for i, data in enumerate(testloader, 0):
-            # Cycles through in batches, set in data loader as 32
-            images, labels = data["img"].to(DEVICE), data["label"].to(DEVICE)
-            outputs = net(images)
+        for data in testloader:
+            labels = (torch.Tensor([[x] for x in data["class"]]).float()).to(DEVICE)
+            data.pop("class")
+            inputs = torch.from_numpy(np.array([values.numpy() for key,values in data.items()], dtype=float)).to(DEVICE)
+            inputs = inputs.mT # transpose required
+            outputs = net(inputs)
             loss += criterion(outputs, labels).item()
             _, predicted = torch.max(outputs.data, 1)
             # Comparing the predicted to the inputs in order to determine EOP
