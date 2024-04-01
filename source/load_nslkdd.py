@@ -22,6 +22,8 @@ from flwr_datasets.partitioner import DirichletPartitioner
 import pandas as pd
 from math import inf
 
+from datasets import Dataset
+
 def load_iid(num_clients, b_size):
     # Download and transform CIFAR-10 (train and test)
     fds = FederatedDataset(dataset="Mireu-Lab/NSL-KDD", partitioners={"train": num_clients})
@@ -41,9 +43,9 @@ def load_iid(num_clients, b_size):
     label = 'class'
     classify = lambda x: 0 if x=='normal' else 1 # converted 'normal' to zero and 'abnormal' to 1
 
-    def apply_transforms(batch):
+        def apply_transforms(batch):
         """Apply transforms to the partition from FederatedDataset."""
-        # Only runs when the data is accessed
+        # Runs when the data is accessed
         # https://towardsdatascience.com/deep-learning-using-pytorch-for-tabular-data-c68017d8b480
         # One hot encoding
         data = pd.DataFrame.from_dict(batch)
@@ -60,19 +62,24 @@ def load_iid(num_clients, b_size):
         # Fix the label column to be binary 
         data_preprocessed = data_normalised.copy()
         data_preprocessed["class"] = [classify(x) for x in data_preprocessed["class"]]
-        output = {key: value for key, value in sorted(data_preprocessed.to_dict(orient="list").items())}
-        return output
+        dataset = Dataset.from_pandas(data_preprocessed)
+        return dataset
 
-    testloader = DataLoader(testset.with_transform(apply_transforms), batch_size=b_size)
+    # Preprocessing data for targets
+    print("Testloading")
+    testloader = DataLoader(apply_transforms(testset), batch_size=b_size)
     trainloaders = []
     valloaders = []
+    print("Train/valloading")
     for c in range(num_clients):
+        print(f"Preprocessing dataset for client {c}")
         partition = fds.load_partition(c)
         # Divide data on each node: 90% train, 10% validation
         partition_train_test = partition.train_test_split(test_size=0.1)
-        partition_train_test = partition_train_test.with_transform(apply_transforms)
-        trainloaders.append(DataLoader(partition_train_test["train"], batch_size=b_size, shuffle=True))
-        valloaders.append(DataLoader(partition_train_test["test"], batch_size=b_size))
+        partition_train = apply_transforms(partition_train_test["train"])
+        partition_test = apply_transforms(partition_train_test["test"])
+        trainloaders.append(DataLoader(partition_train, batch_size=b_size, shuffle=True))
+        valloaders.append(DataLoader(partition_test, batch_size=b_size))
         # if c < 1:
         # # Use to observe heterogeneity of sampling, will need to change after encoding
         #     data = trainloaders[c]
@@ -80,7 +87,6 @@ def load_iid(num_clients, b_size):
         #     normals = np.sum(np.array(temp) == 0)
         #     print(f" Normals = {normals}, Anomoly = {32 - normals}")
     return trainloaders, valloaders, testloader, features
-
 
 def load_niid(num_clients, b_size):
     # Download and transform CIFAR-10 (train and test)
@@ -105,7 +111,7 @@ def load_niid(num_clients, b_size):
 
     def apply_transforms(batch):
         """Apply transforms to the partition from FederatedDataset."""
-        # Only runs when the data is accessed
+        # Runs when the data is accessed
         # https://towardsdatascience.com/deep-learning-using-pytorch-for-tabular-data-c68017d8b480
         # One hot encoding
         data = pd.DataFrame.from_dict(batch)
@@ -122,19 +128,24 @@ def load_niid(num_clients, b_size):
         # Fix the label column to be binary 
         data_preprocessed = data_normalised.copy()
         data_preprocessed["class"] = [classify(x) for x in data_preprocessed["class"]]
-        output = {key: value for key, value in sorted(data_preprocessed.to_dict(orient="list").items())}
-        return output
+        dataset = Dataset.from_pandas(data_preprocessed)
+        return dataset
 
-    testloader = DataLoader(testset.with_transform(apply_transforms), batch_size=b_size)
+    # Preprocessing data for targets
+    print("Testloading")
+    testloader = DataLoader(apply_transforms(testset), batch_size=b_size)
     trainloaders = []
     valloaders = []
+    print("Train/valloading")
     for c in range(num_clients):
+        print(f"Preprocessing dataset for client {c}")
         partition = fds.load_partition(c)
         # Divide data on each node: 90% train, 10% validation
         partition_train_test = partition.train_test_split(test_size=0.1)
-        partition_train_test = partition_train_test.with_transform(apply_transforms)
-        trainloaders.append(DataLoader(partition_train_test["train"], batch_size=b_size, shuffle=True))
-        valloaders.append(DataLoader(partition_train_test["test"], batch_size=b_size))
+        partition_train = apply_transforms(partition_train_test["train"])
+        partition_test = apply_transforms(partition_train_test["test"])
+        trainloaders.append(DataLoader(partition_train, batch_size=b_size, shuffle=True))
+        valloaders.append(DataLoader(partition_test, batch_size=b_size))
         # if c < 1:
         # # Use to observe heterogeneity of sampling, will need to change after encoding
         #     data = trainloaders[c]
@@ -208,6 +219,5 @@ def min_max(num_clients):
     return cont_min_max
     
 
-
 # minmax = min_max(100) # generate the min max value dictionary
-trainloaders, valloaders, testloader, _ = load_niid(100, 32)
+#trainloaders, valloaders, testloader, _ = load_niid(200, 32)

@@ -99,12 +99,7 @@ def test(net, testloader, sensitive_labels=[]):
             inputs = inputs.mT # transpose required
             outputs = net(inputs)
             loss += criterion(outputs.squeeze(1), labels.squeeze(1)).item()
-            #_, predicted = torch.max(outputs.data, 1, keepdim=True)
             predicted = outputs.round()
-            # Comparing the predicted to the inputs in order to determine EOP
-
-            # predicted and labels not the same shape for comparison
-
             matched = (predicted == labels)
             for label in range(len(sensitive_labels)):
               labelled = (labels == label)
