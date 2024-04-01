@@ -30,7 +30,7 @@ def load_iid(num_clients, b_size):
     fds_test = FederatedDataset(dataset="Mireu-Lab/NSL-KDD", partitioners={"test": 10})
     #testset = fds_test.load_partition(0) # central testset
     partition = fds.load_split("test") # using a reduced central testset
-    testset = partition.train_test_split(test_size=0.05)["test"]
+    testset = partition.train_test_split(test_size=0.01)["test"]
     features = testset.features
     # Grouping the categories by type of transform required:
     protocols = ['tcp','udp', 'icmp']
@@ -43,7 +43,7 @@ def load_iid(num_clients, b_size):
     label = 'class'
     classify = lambda x: 0 if x=='normal' else 1 # converted 'normal' to zero and 'abnormal' to 1
 
-        def apply_transforms(batch):
+    def apply_transforms(batch):
         """Apply transforms to the partition from FederatedDataset."""
         # Runs when the data is accessed
         # https://towardsdatascience.com/deep-learning-using-pytorch-for-tabular-data-c68017d8b480
@@ -75,7 +75,7 @@ def load_iid(num_clients, b_size):
         print(f"Preprocessing dataset for client {c}")
         partition = fds.load_partition(c)
         # Divide data on each node: 90% train, 10% validation
-        partition_train_test = partition.train_test_split(test_size=0.1)
+        partition_train_test = partition.train_test_split(test_size=0.01)
         partition_train = apply_transforms(partition_train_test["train"])
         partition_test = apply_transforms(partition_train_test["test"])
         trainloaders.append(DataLoader(partition_train, batch_size=b_size, shuffle=True))

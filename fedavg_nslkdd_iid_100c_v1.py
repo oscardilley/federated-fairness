@@ -35,11 +35,11 @@ print(
 )
 
 # Key parameter and data storage variables:
-NUM_CLIENTS = 200
+NUM_CLIENTS = 100
 LOCAL_EPOCHS = 5
 NUM_ROUNDS = 30
 BATCH_SIZE = 32
-SELECTION_RATE = 0.025 # what proportion of clients are selected per round
+SELECTION_RATE = 0.05 # what proportion of clients are selected per round
 SENSITIVE_ATTRIBUTES = [1] # sensitive attribute is 
 path_extension = f'FedAvg_NSLKDD_iid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {
@@ -153,10 +153,8 @@ def fit_callback(metrics: List[Tuple[int, Metrics]]) -> Metrics:
 
     return {"f_j": f_j, "f_g": f_g, "f_r": f_r, "f_o": f_o}
 
-
-
 # Gathering the data:
-trainloaders, valloaders, testloader, _ = load_niid(NUM_CLIENTS, BATCH_SIZE)
+trainloaders, valloaders, testloader, _ = load_iid(NUM_CLIENTS, BATCH_SIZE)
 # Creating Shapley instance:
 shap = Shapley(testloader, test, set_parameters, NUM_CLIENTS, Net().to(DEVICE))
 # Create FedAvg strategy:
