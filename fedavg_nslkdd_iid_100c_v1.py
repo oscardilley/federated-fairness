@@ -35,12 +35,12 @@ print(
 )
 
 # Key parameter and data storage variables:
-NUM_CLIENTS = 100
-LOCAL_EPOCHS = 10
+NUM_CLIENTS = 200
+LOCAL_EPOCHS = 5
 NUM_ROUNDS = 30
 BATCH_SIZE = 32
-SELECTION_RATE = 0.05 # what proportion of clients are selected per round
-SENSITIVE_ATTRIBUTES = [0] # digits are the senstive labels
+SELECTION_RATE = 0.025 # what proportion of clients are selected per round
+SENSITIVE_ATTRIBUTES = [1] # sensitive attribute is 
 path_extension = f'FedAvg_NSLKDD_iid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {
     "rounds": [],
