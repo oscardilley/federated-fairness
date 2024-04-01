@@ -55,25 +55,25 @@ def set_parameters(net, parameters: List[np.ndarray]):
 
 def train(net, trainloader, epochs: int):
     """Train the network on the training set."""
-    criterion = torch.nn.CrossEntropyLoss()
+    criterion = torch.nn.BCELoss()
     optimizer = torch.optim.Adam(net.parameters())
     net.train()
     for epoch in range(epochs):
         correct, total, epoch_loss = 0, 0, 0.0
         for data in trainloader:
-            labels = (torch.Tensor([[x] for x in data["class"]]).float()).to(DEVICE)
+            labels = (torch.Tensor([[x] for x in data["class"]]).double()).to(DEVICE)
             data.pop("class")
             inputs = torch.from_numpy(np.array([values.numpy() for key,values in data.items()], dtype=float)).to(DEVICE)
             inputs = inputs.mT # transpose required
             optimizer.zero_grad()
             outputs = net(inputs)
-            loss = criterion(outputs, labels)
+            loss = criterion(outputs.squeeze(1), labels.squeeze(1))
             loss.backward()
             optimizer.step()
             # Metrics
             epoch_loss += loss
             total += labels.size(0)
-            correct += (torch.max(outputs.data, 1)[1] == labels).sum().item()
+            correct += (outputs.round() == labels).sum().item()
         epoch_loss /= len(trainloader.dataset)
         epoch_acc = correct / total
         print(f"Epoch {epoch+1}: train loss {epoch_loss}, accuracy {epoch_acc}")
@@ -81,21 +81,30 @@ def train(net, trainloader, epochs: int):
 
 def test(net, testloader, sensitive_labels=[]):
     """Evaluate the network on the entire test set."""
-    criterion = torch.nn.CrossEntropyLoss()
+    criterion = torch.nn.BCELoss()
     correct, total, loss = 0, 0, 0.0
     group_performance = [[0,0] for label in range(len(sensitive_labels))] # preset for EOP calc, will store the performance
     # init array for storing EOP information
+
+    # https://discuss.pytorch.org/t/why-loss-function-always-return-zero-after-first-epoch/138294
+    # Look at the above
+    # Getting negative Shap etc, a few things are wrong
+
     net.eval()
     with torch.no_grad():
         for data in testloader:
-            labels = (torch.Tensor([[x] for x in data["class"]]).float()).to(DEVICE)
+            labels = (torch.Tensor([[x] for x in data["class"]]).double()).to(DEVICE)
             data.pop("class")
             inputs = torch.from_numpy(np.array([values.numpy() for key,values in data.items()], dtype=float)).to(DEVICE)
             inputs = inputs.mT # transpose required
             outputs = net(inputs)
-            loss += criterion(outputs, labels).item()
-            _, predicted = torch.max(outputs.data, 1)
+            loss += criterion(outputs.squeeze(1), labels.squeeze(1)).item()
+            #_, predicted = torch.max(outputs.data, 1, keepdim=True)
+            predicted = outputs.round()
             # Comparing the predicted to the inputs in order to determine EOP
+
+            # predicted and labels not the same shape for comparison
+
             matched = (predicted == labels)
             for label in range(len(sensitive_labels)):
               labelled = (labels == label)

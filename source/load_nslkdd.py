@@ -25,7 +25,10 @@ from math import inf
 def load_iid(num_clients, b_size):
     # Download and transform CIFAR-10 (train and test)
     fds = FederatedDataset(dataset="Mireu-Lab/NSL-KDD", partitioners={"train": num_clients})
-    testset = fds.load_split("test") # central testset
+    fds_test = FederatedDataset(dataset="Mireu-Lab/NSL-KDD", partitioners={"test": 10})
+    #testset = fds_test.load_partition(0) # central testset
+    partition = fds.load_split("test") # using a reduced central testset
+    testset = partition.train_test_split(test_size=0.1)["test"]
     features = testset.features
     # Grouping the categories by type of transform required:
     protocols = ['tcp','udp', 'icmp']
@@ -50,6 +53,9 @@ def load_iid(num_clients, b_size):
         data = pd.DataFrame.from_dict(batch)
         data_onehot = pd.get_dummies(data, columns=categorical.keys(), prefix="", prefix_sep="")
         columns = data_onehot.columns.values.tolist()
+
+        # Need to redo all this in preprocess for efficiency
+
         for labels in categorical.values(): # Ensuring all the columns are always there even if all zero
             for label in labels:
                 if label not in columns:
@@ -93,9 +99,8 @@ def load_niid(num_clients, b_size):
                                        alpha=3, min_partition_size=10,
                                        self_balancing=True)
     fds = FederatedDataset(dataset="Mireu-Lab/NSL-KDD", partitioners={"train": partitioner})
-
-    testset = fds.load_split("test") # central testset
-    features = testset.features
+    partition = fds.load_split("test") # using a reduced central testset
+    testset = partition.train_test_split(test_size=0.1)["test"]
     # Grouping the categories by type of transform required:
     protocols = ['tcp','udp', 'icmp']
     services = ['aol', 'auth', 'bgp', 'courier', 'csnet_ns', 'ctf', 'daytime', 'discard', 'domain', 'domain_u', 'echo', 'eco_i', 'ecr_i', 'efs', 'exec', 'finger', 'ftp', 'ftp_data', 'gopher', 'harvest', 'hostnames', 'http', 'http_2784', 'http_443', 'http_8001', 'imap4', 'IRC', 'iso_tsap', 'klogin', 'kshell', 'ldap', 'link', 'login', 'mtp', 'name', 'netbios_dgm', 'netbios_ns', 'netbios_ssn', 'netstat', 'nnsp', 'nntp', 'ntp_u', 'other', 'pm_dump', 'pop_2', 'pop_3', 'printer', 'private', 'red_i', 'remote_job', 'rje', 'shell', 'smtp', 'sql_net', 'ssh', 'sunrpc', 'supdup', 'systat', 'telnet', 'tftp_u', 'tim_i', 'time', 'urh_i', 'urp_i', 'uucp', 'uucp_path', 'vmnet', 'whois', 'X11', 'Z39_50']
