@@ -29,7 +29,6 @@ a maximum of 5 clients participate in each round, which can be calculated in rea
 Declarations, functions and classes:
 - Shapley - a class enabling full Shapley calculation in flower.
 
-
 -------------------------------------------------------------------------------------------------------------
 
 Usage:

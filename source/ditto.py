@@ -1,12 +1,70 @@
 """
-Implementation of the Ditto Personalisation Based Strategy
+-------------------------------------------------------------------------------------------------------------
 
+ditto.py, , v1.0 
+by Oscar, March 2024
+
+-------------------------------------------------------------------------------------------------------------
+
+Implementation of the Ditto Personalisation Based Federated Learning Strategy.
 Abstracted from the FedAvg strategy from Flower.
 
-"""
-from logging import WARNING
-from typing import Callable, Dict, List, Optional, Tuple, Union
+Implemented from the paper "Ditto: Fair and Robust Federated Learning Through Personalisation"
+https://doi.org/10.48550/arXiv.2012.04221
 
+-------------------------------------------------------------------------------------------------------------
+
+Declarations, functions and classes:
+- Ditto - an abstraction of the Flower strategy.
+
+-------------------------------------------------------------------------------------------------------------
+
+Usage:
+Import from root directory using:
+    >>> from source.ditto import Ditto
+Pass the necessary inputs to the strategy when instantiating, for example:
+    >>> ditto_strategy = Ditto(
+                                # New parameters for Ditto:
+                                ditto_lambda = 1,
+                                ditto_eta = 0.001,
+                                ditto_s = 5,
+                                # Standard strategy parameters:
+                                fraction_fit=SELECTION_RATE,
+                                fraction_evaluate=0.0,
+                                min_fit_clients=int(NUM_CLIENTS*SELECTION_RATE),
+                                min_evaluate_clients=int(NUM_CLIENTS*SELECTION_RATE),
+                                min_available_clients=NUM_CLIENTS,
+                                initial_parameters=fl.common.ndarrays_to_parameters(get_parameters(Net())),
+                                fit_metrics_aggregation_fn = fit_callback,
+                                on_fit_config_fn=fit_config,
+                                accept_failures = False
+                            )
+Start the Flower simulation using the strategy as normal:
+    >>> fl.simulation.start_simulation(
+                                        client_fn=client_fn,
+                                        num_clients=NUM_CLIENTS,
+                                        config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
+                                        strategy=ditto_strategy,
+                                        client_resources=client_resources,
+                                    )
+
+-------------------------------------------------------------------------------------------------------------
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+-------------------------------------------------------------------------------------------------------------
+"""
+from typing import Callable, Dict, List, Optional, Tuple, Union
 from flwr.common import (
     EvaluateIns,
     EvaluateRes,
@@ -22,19 +80,28 @@ from flwr.common import (
 from flwr.common.logger import log
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
-
 from flwr.server.strategy.aggregate import aggregate, aggregate_inplace, weighted_loss_avg
 from flwr.server.strategy.strategy import Strategy
 
 
 class Ditto(Strategy):
-    """Ditto strategy.
-
+    """
+    Ditto personalisation strategy, adapted from flower FedAvg strategy as FedAvg is used as the 
+    Ditto optimiser and solver.
     Implementation based on https://doi.org/10.48550/arXiv.2012.04221
+
+    Additional Attributes for Ditto:
+        ditto_eta - personalisation learning rate
+        ditto_lambda - hyperparameter controlling interpolation between global and local models
+        ditto_s - the number of additional, local personalisation epochs that are used
+
+    Modifications to Standard Strategy for Ditto:
+        configure_fit - passes the Ditto parameters to the fit function config for the client so that
+            it knows to enact the Ditto client side Ditto behaviour.
     """
     def __init__(
         self,
-        *,
+        *, # keyword only arguments after
         fraction_fit: float = 1.0,
         fraction_evaluate: float = 1.0,
         min_fit_clients: int = 2,
@@ -84,7 +151,7 @@ class Ditto(Strategy):
 
     def __repr__(self) -> str:
         """Compute a string representation of the strategy."""
-        rep = f"FedAvg(accept_failures={self.accept_failures})"
+        rep = f"Ditto FedAvg(accept_failures={self.accept_failures})"
         return rep
 
     def num_fit_clients(self, num_available_clients: int) -> Tuple[int, int]:
@@ -130,21 +197,9 @@ class Ditto(Strategy):
         if self.on_fit_config_fn is not None:
             # Custom fit config function provided
             config = self.on_fit_config_fn(server_round)
+        # Ditto parameters are appended and the presence of the Ditto config dict acts as strategy flag:
         config["ditto"] = ditto_parameters
-        # Here is one place we could insert the personalisation
-
-        # We still need to send a global model so can leave the aggregation_fit function alone 
-        # and focus on the personalised bit
-        # We are using the example where the aggregating function in fedavg
-        # Need to implement something at the client and use a conditional flag so that it is generalised for these experiements
-
-        # Seems like you do a number of epochs of standard training 
-        # and then you do a number updating the personalised params and they don't leave the device
-        # Implementation seems to be mostly at the client 
-        # need a few parameters, use the strategy to pass these
-
         fit_ins = FitIns(parameters, config)
-
         # Sample clients
         sample_size, min_num_clients = self.num_fit_clients(
             client_manager.num_available()

@@ -47,30 +47,29 @@ limitations under the License.
 
 -------------------------------------------------------------------------------------------------------------
 """
-from collections import OrderedDict
-from typing import Dict, List, Optional, Tuple
-import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torchvision.transforms as transforms
-import torchvision.datasets as datasets
-from torch.utils.data import DataLoader, random_split
-import random
-from matplotlib import pyplot as plt
-from math import comb
-from itertools import combinations
-import json
-from datetime import timedelta
-import time
-start = time.perf_counter()
-import flwr as fl
-from flwr.common import Metrics
+# from collections import OrderedDict
+# from typing import Dict, List, Optional, Tuple
+# import numpy as np
+# import torch
+# import torch.nn as nn
+# import torch.nn.functional as F
+# import torchvision.transforms as transforms
+# import torchvision.datasets as datasets
+# from torch.utils.data import DataLoader, random_split
+# import random
+# from matplotlib import pyplot as plt
+# from math import comb
+# from itertools import combinations
+# import json
+# from datetime import timedelta
+# import time
+# start = time.perf_counter()
+# import flwr as fl
+# from flwr.common import Metrics
 from flwr_datasets import FederatedDataset
 from flwr_datasets.partitioner import DirichletPartitioner
 import pandas as pd
 from math import inf
-
 from datasets import Dataset
 
 # Key dataset information:
