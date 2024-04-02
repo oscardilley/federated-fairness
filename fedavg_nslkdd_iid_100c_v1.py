@@ -1,7 +1,50 @@
 """
-fedavg_cifar_iid
+-------------------------------------------------------------------------------------------------------------
 
-Runs a flower fairness simulation with the configurable options shown below.
+fedavg_nslkdd_iid_100c_v1.py
+by Oscar, April 2024
+
+-------------------------------------------------------------------------------------------------------------
+
+Simulating using Flower:
+  The FedAvg strategy
+  On the NSL-KDD dataset with the iid partition.
+  For 100 clients
+Data is saved to JSON.
+
+-------------------------------------------------------------------------------------------------------------
+
+Declarations, functions and classes:
+  client_fn - creates Flower clients when required to avoid depleting RAM
+  fit_config - defines the config parameters pass to the client during fit/training
+  evaluate - the central evaluation function
+  fit_callback - the callback following a complete round of client fit, this is used for calculating and
+    aggregating the fairness metrics
+
+-------------------------------------------------------------------------------------------------------------
+
+Usage:
+Ensure the necessary packages are installed using:
+  $ pip install -r requirements.txt
+Alter the config parameters as required.
+Run the script.
+View results in ./Results/{path_extension}.json
+
+-------------------------------------------------------------------------------------------------------------
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+-------------------------------------------------------------------------------------------------------------
 """
 # Library imports
 from collections import OrderedDict
@@ -94,7 +137,7 @@ def evaluate(server_round: int,
     shap.aggregatedRoundParams = parameters
     set_parameters(net, parameters)
     loss, accuracy, _ = test(net, testloader)
-    shap.f_o = accuracy
+    shap.f_o = accuracy # stored incase the user wants to define orchestrator fairness by the central eval performance, usused by default
     shap.centralLoss = loss
     shap.round = server_round
     print(f"Server-side evaluation loss {loss} / accuracy {accuracy}")

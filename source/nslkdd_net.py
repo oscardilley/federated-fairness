@@ -2,7 +2,7 @@
 -------------------------------------------------------------------------------------------------------------
 
 nslkdd_net.py, , v1.0
-by Oscar, March 2024
+by Oscar, April 2024
 
 -------------------------------------------------------------------------------------------------------------
 
@@ -175,6 +175,6 @@ def test(net, testloader, sensitive_labels=[]):
         group_performance[index] = float((group_performance[index][0] - group_performance[index][1]) / total)
     loss /= len(testloader.dataset)
     accuracy = correct / total
-    
+
     return loss, accuracy, group_performance
 

@@ -175,7 +175,7 @@ def test(net, testloader, sensitive_labels=[]):
             outputs = net(images)
             loss += criterion(outputs, labels.long()).item()
             _, predicted = torch.max(outputs.data, 1)
-            # Comparing the predicted to the inputs in order to determine EOP
+            # Comparing the predicted to the inputs in order to determine EOD
             matched = (predicted == labels)
             for label in range(len(sensitive_labels)):
               labelled = (labels == label)

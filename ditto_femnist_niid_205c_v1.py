@@ -1,7 +1,50 @@
 """
-fedavg_femnist_niid
+-------------------------------------------------------------------------------------------------------------
 
-Runs a flower fairness simulation with the configurable options shown below.
+ditto_femnist_niid_205c_v1.py
+by Oscar, March 2024
+
+-------------------------------------------------------------------------------------------------------------
+
+Simulating using Flower:
+  The Ditto strategy
+  On the FEMNIST dataset with the natural non-iid partition
+  For 205 clients
+Data is saved to JSON.
+
+-------------------------------------------------------------------------------------------------------------
+
+Declarations, functions and classes:
+  client_fn - creates Flower clients when required to avoid depleting RAM
+  fit_config - defines the config parameters pass to the client during fit/training
+  evaluate - the central evaluation function
+  fit_callback - the callback following a complete round of client fit, this is used for calculating and
+    aggregating the fairness metrics
+
+-------------------------------------------------------------------------------------------------------------
+
+Usage:
+Ensure the necessary packages are installed using:
+  $ pip install -r requirements.txt
+Alter the config parameters as required.
+Run the script.
+View results in ./Results/{path_extension}.json
+
+-------------------------------------------------------------------------------------------------------------
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+-------------------------------------------------------------------------------------------------------------
 """
 # Library imports
 from collections import OrderedDict
@@ -41,7 +84,7 @@ LOCAL_EPOCHS = 5
 NUM_ROUNDS = 30
 BATCH_SIZE = 32
 SELECTION_RATE = 0.025 # what proportion of clients are selected per round
-SENSITIVE_ATTRIBUTES = [0,1,2,3,4,5,6,7,8,9] # digits are the senstive labels
+SENSITIVE_ATTRIBUTES = [0,1,2,3,4,5,6,7,8,9] # digits are selected as the senstive labels for FEMNIST
 path_extension = f'Ditto_FEMNIST_niid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {
     "rounds": [],
@@ -63,9 +106,6 @@ data = {
             "avg_eop": [],
             "gains": []}}
 
-# FOR FURTHER TIDY UP, COULD PUT ALL BELOW FUNCTIONS IN A CLASS
-# AND INITIALISE WITH EVERYTHING THEY NEED
-
 # Key experiment specific functions:
 def client_fn(cid) -> FlowerClient:
     """
@@ -81,7 +121,7 @@ def fit_config(server_round: int):
     Return training configuration dict for each round.
     """
     config = {
-        "server_round": server_round,  # The current round of federated learning
+        "server_round": server_round, # The current round of federated learning
         "local_epochs": LOCAL_EPOCHS,
         "sensitive_attributes": SENSITIVE_ATTRIBUTES,
     }
@@ -98,7 +138,7 @@ def evaluate(server_round: int,
     shap.aggregatedRoundParams = parameters
     set_parameters(net, parameters)
     loss, accuracy, _ = test(net, testloader)
-    shap.f_o = accuracy
+    shap.f_o = accuracy # stored incase the user wants to define orchestrator fairness by the central eval performance, usused by default
     shap.centralLoss = loss
     shap.round = server_round
     print(f"Server-side evaluation loss {loss} / accuracy {accuracy}")
@@ -166,7 +206,6 @@ trainloaders, valloaders, testloader = femnist_dataset["train"], femnist_dataset
 shap = Shapley(testloader, test, set_parameters, NUM_CLIENTS, Net().to(DEVICE))
 # Create FedAvg strategy:
 strategy = Ditto(
-
     ditto_lambda = 1, # Recommended value from paper for FEMNIST with no malicious clients, it can be selected locally or tuned
     ditto_eta = 0.001,
     ditto_s = 5, # the number of personalised fitting epochs
