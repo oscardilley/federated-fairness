@@ -47,20 +47,21 @@ limitations under the License.
 -------------------------------------------------------------------------------------------------------------
 """
 # Library imports
-from collections import OrderedDict
+# Library imports
+# from collections import OrderedDict
 from typing import Dict, List, Optional, Tuple
 import numpy as np
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torchvision.transforms as transforms
-import torchvision.datasets as datasets
-from torchvision.datasets import EMNIST
-from torch.utils.data import DataLoader, random_split
-import random
-from matplotlib import pyplot as plt
-from math import comb
-from itertools import combinations
+# import torch.nn as nn
+# import torch.nn.functional as F
+# import torchvision.transforms as transforms
+# import torchvision.datasets as datasets
+# from torchvision.datasets import CIFAR10
+# from torch.utils.data import DataLoader, random_split
+# import random
+# from matplotlib import pyplot as plt
+# from math import comb
+# from itertools import combinations
 import json
 from datetime import timedelta
 import time

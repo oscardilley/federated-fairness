@@ -1,2 +1,2 @@
-# Fairness in Federated Learning
+# Federated Fairness Analytics
 Lots coming soon...

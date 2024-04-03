@@ -1,15 +1,15 @@
 """
 -------------------------------------------------------------------------------------------------------------
 
-fedavg_femnist_iid_205c_v1.py
+fedavg_cifar_niid_10c_v1.py
 by Oscar, March 2024
 
 -------------------------------------------------------------------------------------------------------------
 
 Simulating using Flower:
   The FedAvg strategy
-  On the femnist dataset with the iid partition.
-  For 205 clients
+  On the CIFAR-10 dataset with the non-iid partition.
+  For 10 clients
 Data is saved to JSON.
 
 -------------------------------------------------------------------------------------------------------------
@@ -68,24 +68,24 @@ import time
 start = time.perf_counter()
 import flwr as fl
 from flwr.common import Metrics
-import pickle
 # User defined module imports:
 from source.shapley import Shapley
-from source.femnist_net import Net, train, test
+from source.cifar_net import Net, train, test
 from source.client import FlowerClient, DEVICE, get_parameters, set_parameters
+from source.load_cifar import load_niid, load_iid
 
 print(
     f"Training on {DEVICE} using PyTorch {torch.__version__} and Flower {fl.__version__}"
 )
 
 # Key parameter and data storage variables:
-NUM_CLIENTS = 205
-LOCAL_EPOCHS = 5
+NUM_CLIENTS = 10
+LOCAL_EPOCHS = 10
 NUM_ROUNDS = 30
 BATCH_SIZE = 32
-SELECTION_RATE = 0.025 # what proportion of clients are selected per round
+SELECTION_RATE = 0.5 # what proportion of clients are selected per round
 SENSITIVE_ATTRIBUTES = [0,1,2,3,4,5,6,7,8,9] # digits are the senstive labels
-path_extension = f'FedAvg_FEMNIST_iid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
+path_extension = f'FedAvg_CIFAR_niid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {
     "rounds": [],
     "general_fairness": {
@@ -197,11 +197,8 @@ def fit_callback(metrics: List[Tuple[int, Metrics]]) -> Metrics:
 
     return {"f_j": f_j, "f_g": f_g, "f_r": f_r, "f_o": f_o}
 
-
 # Gathering the data:
-with open("./femnist/femnist_iid_loaded.pickle", "rb") as file:
-  femnist_dataset = pickle.load(file)
-trainloaders, valloaders, testloader = femnist_dataset["train"], femnist_dataset["val"], femnist_dataset["test"]
+trainloaders, valloaders, testloader, _ = load_niid(NUM_CLIENTS, BATCH_SIZE)
 # Creating Shapley instance:
 shap = Shapley(testloader, test, set_parameters, NUM_CLIENTS, Net().to(DEVICE))
 # Create FedAvg strategy:
@@ -237,4 +234,4 @@ fl.simulation.start_simulation(
 # Saving data:
 with open('./Results/'+ path_extension + '.json', "w") as outfile:
   data = json.dump(data, outfile)
-print(f"Elapsed time = {timedelta(seconds=time.perf_counter()-start)}")
+print(f"Elapsed time = {timedelta(seconds=time.perf_counter() - start)}")

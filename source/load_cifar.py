@@ -46,7 +46,7 @@ limitations under the License.
 # import torch
 # import torch.nn as nn
 # import torch.nn.functional as F
-# import torchvision.transforms as transforms
+import torchvision.transforms as transforms
 # import torchvision.datasets as datasets
 # from torchvision.datasets import CIFAR10
 from torch.utils.data import DataLoader#, random_split

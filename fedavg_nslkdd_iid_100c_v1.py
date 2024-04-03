@@ -47,20 +47,20 @@ limitations under the License.
 -------------------------------------------------------------------------------------------------------------
 """
 # Library imports
-from collections import OrderedDict
+# from collections import OrderedDict
 from typing import Dict, List, Optional, Tuple
 import numpy as np
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torchvision.transforms as transforms
-import torchvision.datasets as datasets
-from torchvision.datasets import CIFAR10
-from torch.utils.data import DataLoader, random_split
-import random
-from matplotlib import pyplot as plt
-from math import comb
-from itertools import combinations
+# import torch.nn as nn
+# import torch.nn.functional as F
+# import torchvision.transforms as transforms
+# import torchvision.datasets as datasets
+# from torchvision.datasets import CIFAR10
+# from torch.utils.data import DataLoader, random_split
+# import random
+# from matplotlib import pyplot as plt
+# from math import comb
+# from itertools import combinations
 import json
 from datetime import timedelta
 import time
@@ -83,7 +83,7 @@ LOCAL_EPOCHS = 5
 NUM_ROUNDS = 30
 BATCH_SIZE = 32
 SELECTION_RATE = 0.05 # what proportion of clients are selected per round
-SENSITIVE_ATTRIBUTES = [1] # sensitive attribute is 
+SENSITIVE_ATTRIBUTES = [1] # sensitive attribute is the anomolous case
 path_extension = f'FedAvg_NSLKDD_iid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {
     "rounds": [],

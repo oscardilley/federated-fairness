@@ -47,20 +47,21 @@ limitations under the License.
 -------------------------------------------------------------------------------------------------------------
 """
 # Library imports
-from collections import OrderedDict
+# Library imports
+# from collections import OrderedDict
 from typing import Dict, List, Optional, Tuple
 import numpy as np
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torchvision.transforms as transforms
-import torchvision.datasets as datasets
-from torchvision.datasets import CIFAR10
-from torch.utils.data import DataLoader, random_split
-import random
-from matplotlib import pyplot as plt
-from math import comb
-from itertools import combinations
+# import torch.nn as nn
+# import torch.nn.functional as F
+# import torchvision.transforms as transforms
+# import torchvision.datasets as datasets
+# from torchvision.datasets import CIFAR10
+# from torch.utils.data import DataLoader, random_split
+# import random
+# from matplotlib import pyplot as plt
+# from math import comb
+# from itertools import combinations
 import json
 from datetime import timedelta
 import time
@@ -84,6 +85,8 @@ NUM_ROUNDS = 30
 BATCH_SIZE = 32
 SELECTION_RATE = 0.05 # what proportion of clients are selected per round
 SENSITIVE_ATTRIBUTES = [0,1,2,3,4,5,6,7,8,9] # digits are the senstive labels
+QFFL_LEARNING_RATE = 0.1
+Q_PARAM = 0.2
 path_extension = f'q_FedAvg_CIFAR_niid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {
     "rounds": [],
@@ -203,8 +206,8 @@ trainloaders, valloaders, testloader, _ = load_niid(NUM_CLIENTS, BATCH_SIZE)
 shap = Shapley(testloader, test, set_parameters, NUM_CLIENTS, Net().to(DEVICE))
 # Create FedAvg strategy:
 strategy = fl.server.strategy.QFedAvg(
-    q_param = 0.2,
-    qffl_learning_rate= 0.1,
+    q_param = Q_PARAM,
+    qffl_learning_rate= QFFL_LEARNING_RATE,
     fraction_fit=SELECTION_RATE, # sample all clients for training
     fraction_evaluate=0.0, # Disabling federated evaluation
     min_fit_clients=int(NUM_CLIENTS*SELECTION_RATE), # never sample less that this for training

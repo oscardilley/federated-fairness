@@ -122,8 +122,10 @@ def train(net, trainloader, epochs: int, option = None):
                         for p, q in zip(net.parameters(), option["global_params"]):
                             # p/ net.parameters() are what the model was sent to training with - personalised
                             # q/ option["params"] are the global model params
+                            print(p[0])
                             new_p = ditto_update(p, option["eta"], p.grad, option["lambda"], q)
                             p.copy_(new_p)
+                            print(p[0])
             else:
                 optimizer.step()
             # Train metrics:

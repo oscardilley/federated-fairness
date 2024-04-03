@@ -1,14 +1,14 @@
 """
 -------------------------------------------------------------------------------------------------------------
 
-fedavg_femnist_iid_205c_v1.py
+ditto_femnist_iid_205c_v1.py
 by Oscar, March 2024
 
 -------------------------------------------------------------------------------------------------------------
 
 Simulating using Flower:
-  The FedAvg strategy
-  On the femnist dataset with the iid partition.
+  The Ditto strategy
+  On the FEMNIST dataset with the iid partition.
   For 205 clients
 Data is saved to JSON.
 
@@ -47,7 +47,6 @@ limitations under the License.
 -------------------------------------------------------------------------------------------------------------
 """
 # Library imports
-# Library imports
 # from collections import OrderedDict
 from typing import Dict, List, Optional, Tuple
 import numpy as np
@@ -56,7 +55,7 @@ import torch
 # import torch.nn.functional as F
 # import torchvision.transforms as transforms
 # import torchvision.datasets as datasets
-# from torchvision.datasets import CIFAR10
+# from torchvision.datasets import EMNIST
 # from torch.utils.data import DataLoader, random_split
 # import random
 # from matplotlib import pyplot as plt
@@ -73,6 +72,7 @@ import pickle
 from source.shapley import Shapley
 from source.femnist_net import Net, train, test
 from source.client import FlowerClient, DEVICE, get_parameters, set_parameters
+from source.ditto import Ditto
 
 print(
     f"Training on {DEVICE} using PyTorch {torch.__version__} and Flower {fl.__version__}"
@@ -84,8 +84,11 @@ LOCAL_EPOCHS = 5
 NUM_ROUNDS = 30
 BATCH_SIZE = 32
 SELECTION_RATE = 0.025 # what proportion of clients are selected per round
-SENSITIVE_ATTRIBUTES = [0,1,2,3,4,5,6,7,8,9] # digits are the senstive labels
-path_extension = f'FedAvg_FEMNIST_iid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
+SENSITIVE_ATTRIBUTES = [0,1,2,3,4,5,6,7,8,9] # digits are selected as the senstive labels for FEMNIST
+DITTO_LAMBDA = 0.836
+DITTO_ETA = 0.1
+DITTO_PERS_EPOCHS = 10
+path_extension = f'Ditto_FEMNIST_iid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {
     "rounds": [],
     "general_fairness": {
@@ -121,7 +124,7 @@ def fit_config(server_round: int):
     Return training configuration dict for each round.
     """
     config = {
-        "server_round": server_round,  # The current round of federated learning
+        "server_round": server_round, # The current round of federated learning
         "local_epochs": LOCAL_EPOCHS,
         "sensitive_attributes": SENSITIVE_ATTRIBUTES,
     }
@@ -198,14 +201,17 @@ def fit_callback(metrics: List[Tuple[int, Metrics]]) -> Metrics:
     return {"f_j": f_j, "f_g": f_g, "f_r": f_r, "f_o": f_o}
 
 
-# Gathering the data:
+# Gathering the prepocessed data from the pickle file:
 with open("./femnist/femnist_iid_loaded.pickle", "rb") as file:
   femnist_dataset = pickle.load(file)
 trainloaders, valloaders, testloader = femnist_dataset["train"], femnist_dataset["val"], femnist_dataset["test"]
 # Creating Shapley instance:
 shap = Shapley(testloader, test, set_parameters, NUM_CLIENTS, Net().to(DEVICE))
 # Create FedAvg strategy:
-strategy = fl.server.strategy.FedAvg(
+strategy = Ditto(
+    ditto_lambda = DITTO_LAMBDA, # Recommended value from paper for FEMNIST with no malicious clients, it can be selected locally or tuned
+    ditto_eta = DITTO_ETA, # suggested hyperparameter for FEMNIST
+    ditto_s = DITTO_PERS_EPOCHS, # the number of personalised fitting epochs
     fraction_fit=SELECTION_RATE, # sample all clients for training
     fraction_evaluate=0.0, # Disabling federated evaluation
     min_fit_clients=int(NUM_CLIENTS*SELECTION_RATE), # never sample less that this for training

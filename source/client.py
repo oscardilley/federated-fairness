@@ -46,7 +46,7 @@ limitations under the License.
 from collections import OrderedDict
 from typing import Dict, List, Optional, Tuple
 import numpy as np
-# import torch
+import torch
 # import torch.nn as nn
 # import torch.nn.functional as F
 # import torchvision.transforms as transforms
