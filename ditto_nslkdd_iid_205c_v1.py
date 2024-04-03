@@ -1,14 +1,14 @@
 """
 -------------------------------------------------------------------------------------------------------------
 
-ditto_cifar_iid_205c_v1.py
+ditto_nslkdd_iid_205c_v1.py
 by Oscar, March 2024
 
 -------------------------------------------------------------------------------------------------------------
 
 Simulating using Flower:
   The Ditto strategy
-  On the CIFAR-10 dataset with the iid partition.
+  On the NSL-KDD dataset with the iid partition.
   For 205 clients
 Data is saved to JSON.
 
@@ -69,9 +69,9 @@ import flwr as fl
 from flwr.common import Metrics
 # User defined module imports:
 from source.shapley import Shapley
-from source.cifar_net import Net, train, test
+from source.nslkdd_net import Net, train, test
 from source.client import FlowerClient, DEVICE, get_parameters, set_parameters
-from source.load_cifar import load_niid, load_iid
+from source.load_nslkdd import load_niid, load_iid
 from source.ditto import Ditto
 
 print(
@@ -79,14 +79,14 @@ print(
 )
 
 # Key parameter and data storage variables:
-NUM_CLIENTS = 205
+NUM_CLIENTS = 100
 LOCAL_EPOCHS = 5
 NUM_ROUNDS = 30
 BATCH_SIZE = 32
-SELECTION_RATE = 0.025 # what proportion of clients are selected per round
-SENSITIVE_ATTRIBUTES = [0,1,2,3,4,5,6,7,8,9] # digits are selected as the senstive labels for FEMNIST
-DITTO_LAMBDA = 0
-DITTO_ETA = 0.1
+SELECTION_RATE = 0.05 # what proportion of clients are selected per round
+SENSITIVE_ATTRIBUTES = [0] # digits are selected as the senstive labels for FEMNIST
+DITTO_LAMBDA = 0.5
+DITTO_ETA = 0.01
 DITTO_PERS_EPOCHS = 10
 path_extension = f'Ditto_FEMNIST_iid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {

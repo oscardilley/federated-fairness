@@ -55,7 +55,7 @@ limitations under the License.
 # import torch.nn.functional as F
 # import torchvision.transforms as transforms
 # import torchvision.datasets as datasets
-# from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, random_split
 # import random
 # from matplotlib import pyplot as plt
 # from math import comb
