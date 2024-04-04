@@ -1,15 +1,15 @@
 """
 -------------------------------------------------------------------------------------------------------------
 
-ditto_cifar_iid_205c_v1.py
+ditto_cifar_niid_10c_v1.py
 by Oscar, March 2024
 
 -------------------------------------------------------------------------------------------------------------
 
 Simulating using Flower:
   The Ditto strategy
-  On the CIFAR-10 dataset with the iid partition.
-  For 205 clients
+  On the CIFAR-10 dataset with the niid partition.
+  For 10 clients
 Data is saved to JSON.
 
 -------------------------------------------------------------------------------------------------------------
@@ -79,16 +79,17 @@ print(
 )
 
 # Key parameter and data storage variables:
-NUM_CLIENTS = 205
+NUM_CLIENTS = 10
 LOCAL_EPOCHS = 5
 NUM_ROUNDS = 30
 BATCH_SIZE = 32
-SELECTION_RATE = 0.025 # what proportion of clients are selected per round
+SELECTION_RATE = 0.5 # what proportion of clients are selected per round
 SENSITIVE_ATTRIBUTES = [0,1,2,3,4,5,6,7,8,9] # digits are selected as the senstive labels for FEMNIST
-DITTO_LAMBDA = 0
-DITTO_ETA = 0.1
-DITTO_PERS_EPOCHS = 10
-path_extension = f'Ditto_FEMNIST_iid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
+personal_parameters = [None for client in range(NUM_CLIENTS)] # personal parameters stored globally as simulating - needs to be stored on client
+DITTO_LAMBDA = 0.8
+DITTO_ETA = 0.01
+DITTO_PERS_EPOCHS = 5
+path_extension = f'Ditto_CIFAR_niid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {
     "rounds": [],
     "general_fairness": {
@@ -117,7 +118,7 @@ def client_fn(cid) -> FlowerClient:
     net = Net().to(DEVICE)
     trainloader = trainloaders[int(cid)]
     valloader = valloaders[int(cid)]
-    return FlowerClient(cid, net, trainloader, valloader, test, train)
+    return FlowerClient(cid, net, trainloader, valloader, test, train, personal_parameters[int(cid)])
 
 def fit_config(server_round: int):
     """
@@ -159,6 +160,7 @@ def fit_callback(metrics: List[Tuple[int, Metrics]]) -> Metrics:
       cid = client[1]["cid"]
       clients.add(cid)
       parameters[cid] = client[1]["parameters"]
+      personal_parameters[cid] = client[1]["personal_parameters"]
     if True:
       shap.fedSV(clients, parameters)
     # Jain's fairness index (JFI) is used to evaluate uniformity for the fairness metrics
@@ -201,8 +203,8 @@ def fit_callback(metrics: List[Tuple[int, Metrics]]) -> Metrics:
     return {"f_j": f_j, "f_g": f_g, "f_r": f_r, "f_o": f_o}
 
 
-# Gathering the prepocessed data from the pickle file:
-trainloaders, valloaders, testloader, _ = load_iid(NUM_CLIENTS, BATCH_SIZE)
+# Gathering the data:
+trainloaders, valloaders, testloader, _ = load_niid(NUM_CLIENTS, BATCH_SIZE)
 # Creating Shapley instance:
 shap = Shapley(testloader, test, set_parameters, NUM_CLIENTS, Net().to(DEVICE))
 # Create FedAvg strategy:

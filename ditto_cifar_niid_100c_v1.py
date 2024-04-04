@@ -1,15 +1,15 @@
 """
 -------------------------------------------------------------------------------------------------------------
 
-ditto_femnist_niid_205c_v1.py
+ditto_cifar_niid_100c_v1.py
 by Oscar, March 2024
 
 -------------------------------------------------------------------------------------------------------------
 
 Simulating using Flower:
   The Ditto strategy
-  On the FEMNIST dataset with the natural non-iid partition
-  For 205 clients
+  On the CIFAR-10 dataset with the niid partition.
+  For 100 clients
 Data is saved to JSON.
 
 -------------------------------------------------------------------------------------------------------------
@@ -67,11 +67,11 @@ import time
 start = time.perf_counter()
 import flwr as fl
 from flwr.common import Metrics
-import pickle
 # User defined module imports:
 from source.shapley import Shapley
-from source.femnist_net import Net, train, test
+from source.cifar_net import Net, train, test
 from source.client import FlowerClient, DEVICE, get_parameters, set_parameters
+from source.load_cifar import load_niid, load_iid
 from source.ditto import Ditto
 
 print(
@@ -79,17 +79,17 @@ print(
 )
 
 # Key parameter and data storage variables:
-NUM_CLIENTS = 205
+NUM_CLIENTS = 100
 LOCAL_EPOCHS = 5
 NUM_ROUNDS = 30
 BATCH_SIZE = 32
-SELECTION_RATE = 0.025 # what proportion of clients are selected per round
+SELECTION_RATE = 0.05 # what proportion of clients are selected per round
 SENSITIVE_ATTRIBUTES = [0,1,2,3,4,5,6,7,8,9] # digits are selected as the senstive labels for FEMNIST
 personal_parameters = [None for client in range(NUM_CLIENTS)] # personal parameters stored globally as simulating - needs to be stored on client
-DITTO_LAMBDA = 0.836
-DITTO_ETA = 0.02
-DITTO_PERS_EPOCHS = 10
-path_extension = f'Ditto_FEMNIST_niid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
+DITTO_LAMBDA = 0.8
+DITTO_ETA = 0.01
+DITTO_PERS_EPOCHS = 5
+path_extension = f'Ditto_CIFAR_niid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {
     "rounds": [],
     "general_fairness": {
@@ -204,9 +204,7 @@ def fit_callback(metrics: List[Tuple[int, Metrics]]) -> Metrics:
 
 
 # Gathering the data:
-with open("./femnist/femnist_niid_loaded.pickle", "rb") as file:
-  femnist_dataset = pickle.load(file)
-trainloaders, valloaders, testloader = femnist_dataset["train"], femnist_dataset["val"], femnist_dataset["test"]
+trainloaders, valloaders, testloader, _ = load_niid(NUM_CLIENTS, BATCH_SIZE)
 # Creating Shapley instance:
 shap = Shapley(testloader, test, set_parameters, NUM_CLIENTS, Net().to(DEVICE))
 # Create FedAvg strategy:

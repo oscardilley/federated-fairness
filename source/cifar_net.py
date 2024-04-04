@@ -48,7 +48,7 @@ limitations under the License.
 """
 # from collections import OrderedDict
 # from typing import Dict, List, Optional, Tuple
-# import numpy as np
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -103,27 +103,36 @@ def train(net, trainloader, epochs: int, option = None):
         epochs - the number of local epochs to train over
         option - a flag to enable alternative training regimes such as ditto
     """
+    def ditto_manual_update(lr, lam, glob):
+        """ Manual parameter updates for ditto """
+        with torch.no_grad():
+            counter = 0
+            q = [torch.from_numpy(g).to(DEVICE) for g in glob]
+            for p in net.parameters():
+                new_p = p - lr*(p.grad + (lam * (p - q[counter])))
+                p.copy_(new_p)
+                counter += 1
+            return
+
     ditto_update = lambda p, lr, grad, lam, glob: p - lr*(grad + (lam *(p - glob))) # The ditto update function
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(net.parameters())
-    net.train()
     for epoch in range(epochs):
+        net.train()
         correct, total, epoch_loss = 0, 0, 0.0
+        flag = True
         for i, data in enumerate(trainloader,0):
+            net.train()
             images, labels = data["img"].to(DEVICE), data["label"].to(DEVICE)
             optimizer.zero_grad()
             outputs = net(images)
             loss = criterion(net(images), labels)
+            #print(f"Epoch {epoch} loss {loss}")
             loss.backward()
             if option is not None:
                 if option["opt"] == "ditto":
                     # Ditto personalised updates, used https://discuss.pytorch.org/t/updatation-of-parameters-without-using-optimizer-step/34244/15
-                    with torch.no_grad():
-                        for p, q in zip(net.parameters(), option["global_params"]):
-                            # p/ net.parameters() are what the model was sent to training with - personalised
-                            # q/ option["params"] are the global model params
-                            new_p = ditto_update(p, option["eta"], p.grad, option["lambda"], q)
-                            p.copy_(new_p)
+                    ditto_manual_update(option["eta"], option["lambda"], option["global_params"])
             else:
                 optimizer.step()
             # Train metrics:
@@ -133,6 +142,7 @@ def train(net, trainloader, epochs: int, option = None):
         epoch_loss /= len(trainloader.dataset)
         epoch_acc = correct / total
         print(f"Epoch {epoch+1}: train loss {epoch_loss}, accuracy {epoch_acc}")
+
 
 
 def test(net, testloader, sensitive_labels=[]):

@@ -85,8 +85,9 @@ NUM_ROUNDS = 30
 BATCH_SIZE = 32
 SELECTION_RATE = 0.025 # what proportion of clients are selected per round
 SENSITIVE_ATTRIBUTES = [0,1,2,3,4,5,6,7,8,9] # digits are selected as the senstive labels for FEMNIST
+personal_parameters = [None for client in range(NUM_CLIENTS)] # personal parameters stored globally as simulating - needs to be stored on client
 DITTO_LAMBDA = 0.836
-DITTO_ETA = 0.1
+DITTO_ETA = 0.02
 DITTO_PERS_EPOCHS = 10
 path_extension = f'Ditto_FEMNIST_iid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {
@@ -117,7 +118,7 @@ def client_fn(cid) -> FlowerClient:
     net = Net().to(DEVICE)
     trainloader = trainloaders[int(cid)]
     valloader = valloaders[int(cid)]
-    return FlowerClient(cid, net, trainloader, valloader, test, train)
+    return FlowerClient(cid, net, trainloader, valloader, test, train, personal_parameters[int(cid)])
 
 def fit_config(server_round: int):
     """
@@ -159,6 +160,7 @@ def fit_callback(metrics: List[Tuple[int, Metrics]]) -> Metrics:
       cid = client[1]["cid"]
       clients.add(cid)
       parameters[cid] = client[1]["parameters"]
+      personal_parameters[cid] = client[1]["personal_parameters"]
     if True:
       shap.fedSV(clients, parameters)
     # Jain's fairness index (JFI) is used to evaluate uniformity for the fairness metrics

@@ -85,16 +85,14 @@ class FlowerClient(fl.client.NumPyClient):
         fit - detects the strategy used, obtains strategy parameters, trains the model and 
             gathers metrics for fairness analytics.
     """
-    def __init__(self, cid, net, trainloader, valloader, test_function, train_function):
+    def __init__(self, cid, net, trainloader, valloader, test_function, train_function, per_params=None):
         self.cid = cid
         self.net = net
-        self.temp = net # used for data formatting in ditto implementation, not trained
         self.trainloader = trainloader
         self.valloader = valloader
         self.test = test_function
         self.train = train_function
-        self.per_params = None
-        self.participation_flag = False
+        self.per_params = per_params
 
     def get_parameters(self, config):
         """ Return the parameters of self.net """
@@ -119,10 +117,10 @@ class FlowerClient(fl.client.NumPyClient):
         local_epochs = config["local_epochs"]
         sensitive_attributes = config["sensitive_attributes"]
         # Detecting the strategy on the first round and setting a flag:
-        if not self.participation_flag:
+        if self.per_params == None:
             if "ditto" in config: # Initialising personalised params to be global
+                print(f"Client {self.cid} pers param initialisation")
                 self.per_params = parameters
-            self.participation_flag = True
         print(f"[Client {self.cid}, round {server_round}] fit, config: {config}")
         # Training and evaluating
         set_parameters(self.net, parameters)
@@ -134,13 +132,11 @@ class FlowerClient(fl.client.NumPyClient):
         # if ditto personalisation strategy is used:
         if "ditto" in config:
             ditto_parameters = config["ditto"]
-            set_parameters(self.temp, parameters) # so that that parameters are tensor not numpy
-            global_params = self.temp.parameters()
             set_parameters(self.net, self.per_params)
-            self.train(self.net, self.trainloader, epochs=ditto_parameters["s"], option={"opt": "ditto",
-                                                                                         "lambda": ditto_parameters["lambda"],
-                                                                                         "eta": ditto_parameters["eta"],
-                                                                                         "global_params": global_params})                                                             
+            self.train(self.net, self.trainloader, epochs=int(ditto_parameters["s"]), option={"opt": "ditto",
+                                                                    "lambda": ditto_parameters["lambda"],
+                                                                    "eta": ditto_parameters["eta"],
+                                                                    "global_params": params})                                                         
             # Updating personalised params stored:
             self.per_params = get_parameters(self.net)
         else:
@@ -150,7 +146,7 @@ class FlowerClient(fl.client.NumPyClient):
         loss, accuracy, group_eod = self.test(self.net, self.valloader, sensitive_attributes)
         group_fairness = dict(zip(sensitive_attributes, group_eod))
 
-        return params, len(self.trainloader), {"cid":int(self.cid), "parameters": params, "accuracy": float(accuracy), "loss": float(loss), "group_fairness": group_fairness, "reward": float(reward)}
+        return params, len(self.trainloader), {"cid":int(self.cid), "personal_parameters": self.per_params, "parameters": params, "accuracy": float(accuracy), "loss": float(loss), "group_fairness": group_fairness, "reward": float(reward)}
 
 def get_parameters(net) -> List[np.ndarray]:
     """taking state_dict values to numpy (state_dict holds learnable parameters) """

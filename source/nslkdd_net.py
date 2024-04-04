@@ -99,7 +99,16 @@ def train(net, trainloader, epochs: int, option = None):
         epochs - the number of local epochs to train over
         option - a flag to enable alternative training regimes such as ditto
     """
-    ditto_update = lambda p, lr, grad, lam, glob: p - lr*(grad + (lam *(p - glob))) # The ditto update function
+    def ditto_manual_update(lr, lam, glob):
+        """ Manual parameter updates for ditto """
+        with torch.no_grad():
+            counter = 0
+            q = [torch.from_numpy(g).to(DEVICE) for g in glob]
+            for p in net.parameters():
+                new_p = p - lr*(p.grad + (lam * (p - q[counter])))
+                p.copy_(new_p)
+                counter += 1
+            return
     criterion = torch.nn.BCELoss()
     optimizer = torch.optim.Adam(net.parameters())
     net.train()
@@ -116,13 +125,7 @@ def train(net, trainloader, epochs: int, option = None):
             loss.backward()
             if option is not None:
                 if option["opt"] == "ditto":
-                    # Ditto personalised updates, used https://discuss.pytorch.org/t/updatation-of-parameters-without-using-optimizer-step/34244/15
-                    with torch.no_grad():
-                        for p, q in zip(net.parameters(), option["global_params"]):
-                            # p/ net.parameters() are what the model was sent to training with - personalised
-                            # q/ option["params"] are the global model params
-                            new_p = ditto_update(p, option["eta"], p.grad, option["lambda"], q)
-                            p.copy_(new_p)
+                    ditto_manual_update(option["eta"], option["lambda"], option["global_params"])
             else:
                 optimizer.step()
             # Train metrics:
