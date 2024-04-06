@@ -1,7 +1,7 @@
 """
 -------------------------------------------------------------------------------------------------------------
 
-ditto.py, v1.0 
+fedminmax.py, v1.0 
 by Oscar, March 2024
 
 -------------------------------------------------------------------------------------------------------------
@@ -9,44 +9,22 @@ by Oscar, March 2024
 Implementation of the Ditto Personalisation Based Federated Learning Strategy.
 Abstracted from the FedAvg strategy from Flower.
 
-Implemented from the paper "Ditto: Fair and Robust Federated Learning Through Personalisation"
-https://doi.org/10.48550/arXiv.2012.04221
+Implemented from the paper "Minimax Demographic Group Fairness in Federated Learning"
+https://doi.org/10.1145/3531146.3533081
 
 -------------------------------------------------------------------------------------------------------------
 
 Declarations, functions and classes:
-- Ditto - an abstraction of the Flower strategy.
+- FedMinMax - an abstraction of the Flower strategy.
+- data_preprocess - a function to determine the necessary parameters for the FedMinMax strategy.
 
 -------------------------------------------------------------------------------------------------------------
 
 Usage:
 Import from root directory using:
-    >>> from source.ditto import Ditto
+    >>> from source.fedminmax import FedMinMax
 Pass the necessary inputs to the strategy when instantiating, for example:
-    >>> ditto_strategy = Ditto(
-                                # New parameters for Ditto:
-                                ditto_lambda = 1,
-                                ditto_eta = 0.001,
-                                ditto_s = 5,
-                                # Standard strategy parameters:
-                                fraction_fit=SELECTION_RATE,
-                                fraction_evaluate=0.0,
-                                min_fit_clients=int(NUM_CLIENTS*SELECTION_RATE),
-                                min_evaluate_clients=int(NUM_CLIENTS*SELECTION_RATE),
-                                min_available_clients=NUM_CLIENTS,
-                                initial_parameters=fl.common.ndarrays_to_parameters(get_parameters(Net())),
-                                fit_metrics_aggregation_fn = fit_callback,
-                                on_fit_config_fn=fit_config,
-                                accept_failures = False
-                            )
-Start the Flower simulation using the strategy as normal:
-    >>> fl.simulation.start_simulation(
-                                        client_fn=client_fn,
-                                        num_clients=NUM_CLIENTS,
-                                        config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
-                                        strategy=ditto_strategy,
-                                        client_resources=client_resources,
-                                    )
+    >>> 
 
 -------------------------------------------------------------------------------------------------------------
 
@@ -64,6 +42,7 @@ limitations under the License.
 
 -------------------------------------------------------------------------------------------------------------
 """
+import numpy as np
 from typing import Callable, Dict, List, Optional, Tuple, Union
 from flwr.common import (
     EvaluateIns,
@@ -83,21 +62,75 @@ from flwr.server.client_proxy import ClientProxy
 from flwr.server.strategy.aggregate import aggregate, aggregate_inplace, weighted_loss_avg
 from flwr.server.strategy.strategy import Strategy
 
-
-class Ditto(Strategy):
+def data_preprocess(num_clients, trainloaders, valloaders, sensitive_attributes):
     """
-    Ditto personalisation strategy, adapted from flower FedAvg strategy as FedAvg is used as the 
-    Ditto optimiser and solver.
-    Implementation based on https://doi.org/10.48550/arXiv.2012.04221
+    Used to parse the data sets and determine:
+        - the total number of samples per client
+        - the total number of samples for each sensitive attribute per client
+        - the total number of samples corresponding to each sensitive attributes
+        - the total number of samples
+    As we are using simulation, this can be precomputed. In a real federated learning scenario, clients would have to compute their own
+    metadata and share with the server. This is a limitation of FedMinMax.
 
-    Additional Attributes for Ditto:
-        ditto_eta - personalisation learning rate
-        ditto_lambda - hyperparameter controlling interpolation between global and local models
-        ditto_s - the number of additional, local personalisation epochs that are used
+    Inputs:
+    num_clients - the total number of clients in the federation.
+    trainloaders - a list of Pytorch DataLoaders for all clients, indexed by cid
+    valloaders - a list of Pytorch validation DataLoaders for all clients, indexed by cid
+    senstive_attributes - the list of sensitive attrributes (in this case, certain labels of the dataset)
+    NB: it is assumed that the input data has been suitable preprocessed and that the trainloaders and valloaders are the 
+    same length, aligned by index.
 
-    Modifications to Standard Strategy for Ditto:
-        configure_fit - passes the Ditto parameters to the fit function config for the client so that
-            it knows to enact the Ditto client side Ditto behaviour.
+    Outputs:
+    A dictionary containing the total number of samples, total number of sensitive samples per attribute
+    and the total number of each sensitive attribute that each clients dataset contrains.
+
+    """
+    print("-------------------Preprocessing Data for FedMinMax--------------------------")
+    # Initialising data structures:
+    num_sensitive = len(sensitive_attributes)
+    num_total_samples = 0
+    num_total_sensitive_samples = [0 for i in range(num_sensitive)]
+    #num_sensitive_per_client = [[0 for i in range(num_sensitive)] for c in range(num_clients)] # not required
+    # Iterating over the clients:
+    for i in range(num_clients):
+        print(f"Preprocessing client {i}")
+        # Parsing the individual datasets:
+        for data in trainloaders[i]:
+            if "label" in data:
+                labels = data["label"]
+            else:
+                labels = data["class"] # accounts for NSL-KDD
+            for s in range(num_sensitive):
+                matched = int((labels == sensitive_attributes[s]).sum())
+                #num_sensitive_per_client[i][s] += matched
+                num_total_sensitive_samples[s]+= matched
+                num_total_samples += len(labels)
+        for data in valloaders[i]:
+            if "label" in data:
+                labels = data["label"]
+            else:
+                labels = data["class"] # accounts for NSL-KDD
+            for s in range(num_sensitive):
+                matched = int((labels == sensitive_attributes[s]).sum())
+                #num_sensitive_per_client[i][s] += matched
+                num_total_sensitive_samples[s]+= matched
+                num_total_samples += len(labels)
+    # returning final metrics:
+    print("-------------------------------- End --------------------------------")
+    return {"total": num_total_samples, "total_sensitive": num_total_sensitive_samples}#, "sensitive_per_client":num_sensitive_per_client}
+
+
+
+class FedMinMax(Strategy):
+    """
+    FedMinMax Federated Learning Strategy adapted from the Flower FedAvg Strategy
+    Implementation based on https://doi.org/10.1145/3531146.3533081
+
+    Additional Attributes for FedMinMax:
+    
+
+    Modifications to Standard Strategy for FedMinMax:
+        
     """
     def __init__(
         self,
@@ -120,9 +153,9 @@ class Ditto(Strategy):
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         inplace: bool = True,
-        ditto_eta = 0.001,
-        ditto_lambda = 0.1,
-        ditto_s = 5,
+        lr = 0.001,
+        dataset_information = None,
+        sensitive_attributes = []
     ) -> None:
         super().__init__()
 
@@ -145,13 +178,18 @@ class Ditto(Strategy):
         self.fit_metrics_aggregation_fn = fit_metrics_aggregation_fn
         self.evaluate_metrics_aggregation_fn = evaluate_metrics_aggregation_fn
         self.inplace = inplace
-        self.ditto_eta = ditto_eta
-        self.ditto_lambda = ditto_lambda
-        self.ditto_s = ditto_s
+        self.lr = lr
+        self.sensitive_attributes = sensitive_attributes
+        self.total_samples = dataset_information["total"]
+        self.total_sensitive = dataset_information["total_sensitive"]
+        #total_sensitive_per_client = dataset_information["sensitive_per_client"] # probably not required
+        self.rho = np.array([(i / self.total_samples) for i in self.total_sensitive])
+        self.mu = self.rho # weighing coefficients initialised to rho
+
 
     def __repr__(self) -> str:
         """Compute a string representation of the strategy."""
-        rep = f"Ditto FedAvg(accept_failures={self.accept_failures})"
+        rep = f"FedMinMax(accept_failures={self.accept_failures})"
         return rep
 
     def num_fit_clients(self, num_available_clients: int) -> Tuple[int, int]:
@@ -190,15 +228,21 @@ class Ditto(Strategy):
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
     ) -> List[Tuple[ClientProxy, FitIns]]:
         """Configure the next round of training."""
-        ditto_parameters = {"lambda": self.ditto_lambda,
-                            "eta": self.ditto_eta,
-                            "s": self.ditto_s
+        # calculate the weights
+        weights = (self.mu / self.rho) # weights initialised to 1,1,1,1,...
+
+
+        # Passing weights and learning rate to each client
+        fedminmax_parameters = {"opt": "fedminmax",
+                            "w": weights,
+                            "lr": self.lr, 
+                            "attributes": self.sensitive_attributes
                             }
         if self.on_fit_config_fn is not None:
             # Custom fit config function provided
             config = self.on_fit_config_fn(server_round)
         # Ditto parameters are appended and the presence of the Ditto config dict acts as strategy flag:
-        config["ditto"] = ditto_parameters
+        config["fedminmax"] = fedminmax_parameters
         fit_ins = FitIns(parameters, config)
         # Sample clients
         sample_size, min_num_clients = self.num_fit_clients(
@@ -249,6 +293,15 @@ class Ditto(Strategy):
         # Do not aggregate if there are failures and failures are not accepted
         if not self.accept_failures and failures:
             return None, {}
+
+
+        # I think the reweighing will be carried out here, need to experiment with what results are returned - might need a config dictionary
+
+        # use fit_res dot notation for _, fit_res in results
+
+        # also need to implement own aggregation
+
+        # Update the weighting coefficients as per the algorithm, using the parameters that each client sends back
 
         if self.inplace:
             # Does in-place weighted average of results

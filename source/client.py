@@ -93,6 +93,21 @@ class FlowerClient(fl.client.NumPyClient):
         self.test = test_function
         self.train = train_function
         self.per_params = per_params
+        # Checking client dataset length without assuming batch size
+        dataset_length = 0
+        for data in trainloader:
+            if "label" in data:
+                labels = data["label"]
+            else:
+                labels = data["class"] # accounts for NSL-KDD
+            dataset_length += len(labels)
+        for data in valloader:
+            if "label" in data:
+                labels = data["label"]
+            else:
+                labels = data["class"] # accounts for NSL-KDD
+            dataset_length += len(labels)
+        self.dataset_len = dataset_length
 
     def get_parameters(self, config):
         """ Return the parameters of self.net """
@@ -126,21 +141,31 @@ class FlowerClient(fl.client.NumPyClient):
         set_parameters(self.net, parameters)
         # Determining the reward the client has receieved from the server for incentive fairness in the case it is the model itself:
         _, reward, _ = self.test(self.net, self.valloader, []) 
-        # Training and storing the parameters at the end of training.
-        self.train(self.net, self.trainloader, epochs=local_epochs)
-        params = get_parameters(self.net)
-        # if ditto personalisation strategy is used:
+        # Default is FedAvg:
         if "ditto" in config:
+            # Training and storing the parameters at the end of training.
+            self.train(self.net, self.trainloader, epochs=local_epochs)
+            params = get_parameters(self.net)
             ditto_parameters = config["ditto"]
             set_parameters(self.net, self.per_params)
-            self.train(self.net, self.trainloader, epochs=int(ditto_parameters["s"]), option={"opt": "ditto",
-                                                                    "lambda": ditto_parameters["lambda"],
-                                                                    "eta": ditto_parameters["eta"],
-                                                                    "global_params": params})                                                         
+            opts = {"opt": "ditto", "lambda": ditto_parameters["lambda"], "eta": ditto_parameters["eta"], "global_params": params}
+            self.train(self.net, self.trainloader, epochs=int(ditto_parameters["s"]), option=opts)                                                         
             # Updating personalised params stored:
             self.per_params = get_parameters(self.net)
-        else:
-            set_parameters(self.net, params)
+        elif "fedminmax" in config:
+            opts = config["fedminmax"]
+            returns = self.train(self.net, self.trainloader, epochs=local_epochs, option = opts)
+            params = get_parameters(self.net)
+            risks = returns["fedminmax_risks"]
+            print(risks)
+            # need to get the different risk measures to send back to the server
+
+            # can we use the return of train?
+
+        else: # Default case
+            # Training and storing the parameters at the end of training.
+            self.train(self.net, self.trainloader, epochs=local_epochs)
+            params = get_parameters(self.net)
         # Performing federated evaluation on the clients that are sampled for training:
         print(f"[Client {self.cid}] evaluate, config: {config}")
         loss, accuracy, group_eod = self.test(self.net, self.valloader, sensitive_attributes)

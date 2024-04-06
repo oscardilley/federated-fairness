@@ -55,7 +55,7 @@ import torch.nn.functional as F
 # import torchvision.transforms as transforms
 # import torchvision.datasets as datasets
 # from torchvision.datasets import EMNIST
-# from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 # import random
 # from matplotlib import pyplot as plt
 # from math import comb
@@ -103,6 +103,7 @@ def train(net, trainloader, epochs: int, option = None):
         epochs - the number of local epochs to train over
         option - a flag to enable alternative training regimes such as ditto
     """
+    sum_risks = None # Placeholder for fedminmax return
     def ditto_manual_update(lr, lam, glob):
         """ Manual parameter updates for ditto """
         with torch.no_grad():
@@ -114,25 +115,58 @@ def train(net, trainloader, epochs: int, option = None):
                 counter += 1
             return
 
-    ditto_update = lambda p, lr, grad, lam, glob: p - lr*(grad + (lam *(p - glob))) # The ditto update function
+    def fedminmax_manual_update(lr, risk):
+        """ Manual parameter updates for FedMinMax strategy"""
+        with torch.no_grad():
+            for p in net.parameters():
+                new_p = p - (lr*(p.grad)*risk)
+                p.copy_(new_p)
+            return
+
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(net.parameters())
     for epoch in range(epochs):
-        net.train()
         correct, total, epoch_loss = 0, 0, 0.0
-        flag = True
         for i, data in enumerate(trainloader,0):
             net.train()
             images, labels = data["img"].to(DEVICE), data["label"].to(DEVICE)
+            batch_size = len(labels)
             optimizer.zero_grad()
             outputs = net(images)
             loss = criterion(net(images), labels)
-            #print(f"Epoch {epoch} loss {loss}")
-            loss.backward()
+            loss.backward() # calculated the gradients
             if option is not None:
                 if option["opt"] == "ditto":
                     # Ditto personalised updates, used https://discuss.pytorch.org/t/updatation-of-parameters-without-using-optimizer-step/34244/15
                     ditto_manual_update(option["eta"], option["lambda"], option["global_params"])
+                if option["opt"] == "fedminmax":
+                    sensitive_attributes = option["attributes"]
+                    if sum_risks is None:
+                        sum_risks = np.array([0.0 for a in sensitive_attributes])
+                    subset_losses = [0 for a in sensitive_attributes]
+                    subsets = [[] for a in sensitive_attributes]
+                    number_sensitive = [0 for group in sensitive_attributes]
+                    # Building mini datasets for each sensitive attribute:
+                    for l in range(batch_size):
+                        try:
+                            i = sensitive_attributes.index(int(labels[l]))
+                        except:
+                            continue
+                        subsets[i].append(images[l])
+                        number_sensitive[i] += 1
+                    # Testing the mini datasets to determine the risks:
+                    for s in range(len(sensitive_attributes)):
+                        if subsets[s] == []:
+                            continue
+                        lbls = torch.Tensor([sensitive_attributes[s] for img in range(len(subsets[s]))]).long().to(DEVICE)
+                        imgs = (torch.stack(subsets[s])).to(DEVICE)
+                        subset_loss = criterion(net(imgs), lbls)
+                        subset_losses[s] += float(subset_loss)
+                    # Calculating the key risk parameters
+                    risks = np.nan_to_num(np.array(subset_losses) / np.array(number_sensitive))
+                    sum_risks += risks
+                    risk = np.sum((np.array(number_sensitive) / batch_size) * np.array(option["w"]) * risks)
+                    fedminmax_manual_update(option["lr"], risk)
             else:
                 optimizer.step()
             # Train metrics:
@@ -142,6 +176,7 @@ def train(net, trainloader, epochs: int, option = None):
         epoch_loss /= len(trainloader.dataset)
         epoch_acc = correct / total
         print(f"Epoch {epoch+1}: train loss {epoch_loss}, accuracy {epoch_acc}")
+    return {"fedminmax_risks": sum_risks}
 
 
 
