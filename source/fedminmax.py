@@ -120,7 +120,6 @@ def data_preprocess(num_clients, trainloaders, valloaders, sensitive_attributes)
     return {"total": num_total_samples, "total_sensitive": num_total_sensitive_samples}#, "sensitive_per_client":num_sensitive_per_client}
 
 
-
 class FedMinMax(Strategy):
     """
     FedMinMax Federated Learning Strategy adapted from the Flower FedAvg Strategy
@@ -228,19 +227,19 @@ class FedMinMax(Strategy):
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
     ) -> List[Tuple[ClientProxy, FitIns]]:
         """Configure the next round of training."""
+        if self.on_fit_config_fn is not None:
+            # Custom fit config function provided
+            config = self.on_fit_config_fn(server_round)
         # calculate the weights
+        risks = config["risks"]
+        print(risks)
         weights = (self.mu / self.rho) # weights initialised to 1,1,1,1,...
-
-
-        # Passing weights and learning rate to each client
+        # Passing weights, learning rate and sensitive attributes to each client
         fedminmax_parameters = {"opt": "fedminmax",
                             "w": weights,
                             "lr": self.lr, 
                             "attributes": self.sensitive_attributes
                             }
-        if self.on_fit_config_fn is not None:
-            # Custom fit config function provided
-            config = self.on_fit_config_fn(server_round)
         # Ditto parameters are appended and the presence of the Ditto config dict acts as strategy flag:
         config["fedminmax"] = fedminmax_parameters
         fit_ins = FitIns(parameters, config)
@@ -262,7 +261,6 @@ class FedMinMax(Strategy):
         # Do not configure federated evaluation if fraction eval is 0.
         if self.fraction_evaluate == 0.0:
             return []
-
         # Parameters and config
         config = {}
         if self.on_evaluate_config_fn is not None:
@@ -293,16 +291,6 @@ class FedMinMax(Strategy):
         # Do not aggregate if there are failures and failures are not accepted
         if not self.accept_failures and failures:
             return None, {}
-
-
-        # I think the reweighing will be carried out here, need to experiment with what results are returned - might need a config dictionary
-
-        # use fit_res dot notation for _, fit_res in results
-
-        # also need to implement own aggregation
-
-        # Update the weighting coefficients as per the algorithm, using the parameters that each client sends back
-
         if self.inplace:
             # Does in-place weighted average of results
             aggregated_ndarrays = aggregate_inplace(results)
@@ -313,7 +301,6 @@ class FedMinMax(Strategy):
                 for _, fit_res in results
             ]
             aggregated_ndarrays = aggregate(weights_results)
-
         parameters_aggregated = ndarrays_to_parameters(aggregated_ndarrays)
 
         # Aggregate custom metrics if aggregation fn was provided

@@ -85,7 +85,8 @@ NUM_ROUNDS = 30
 BATCH_SIZE = 32
 SELECTION_RATE = 0.05 # what proportion of clients are selected per round
 SENSITIVE_ATTRIBUTES = [0,1,2,3,4,5,6,7,8,9] # digits are selected as the senstive labels for FEMNIST
-FEDMINMAX_LR = 0.01
+FEDMINMAX_LR = 0.05
+RISKS = None
 path_extension = f'FedMinMax_CIFAR_iid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {
     "rounds": [],
@@ -125,6 +126,7 @@ def fit_config(server_round: int):
         "server_round": server_round, # The current round of federated learning
         "local_epochs": LOCAL_EPOCHS,
         "sensitive_attributes": SENSITIVE_ATTRIBUTES,
+        "risks": RISKS,
     }
     return config
 
@@ -152,6 +154,7 @@ def fit_callback(metrics: List[Tuple[int, Metrics]]) -> Metrics:
     """
     clients = set()
     parameters = [None for client in range(NUM_CLIENTS)]
+    RISKS = [metric["risks"] for _,metric in metrics]
     # Why are the parameters we get here the post aggregation ones...?
     for client in metrics:
       cid = client[1]["cid"]

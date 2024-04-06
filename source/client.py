@@ -78,7 +78,7 @@ class FlowerClient(fl.client.NumPyClient):
         test - bespoke test function for the dataset used, defined in *_net.py files.
         train - bespoke train function for the dataset used, defined in *_net.py files.
         per_params - parameter attribute for storing personalised parameters for Ditto.
-        participation flag - Raising flag after first instance the client participates.
+        risks - the risks per protected group for the FedMinMax implementation.
 
     Methods:
         get_parameters - returns the current parameters of self.net
@@ -93,6 +93,7 @@ class FlowerClient(fl.client.NumPyClient):
         self.test = test_function
         self.train = train_function
         self.per_params = per_params
+        self.risks = None
         # Checking client dataset length without assuming batch size
         dataset_length = 0
         for data in trainloader:
@@ -156,12 +157,7 @@ class FlowerClient(fl.client.NumPyClient):
             opts = config["fedminmax"]
             returns = self.train(self.net, self.trainloader, epochs=local_epochs, option = opts)
             params = get_parameters(self.net)
-            risks = returns["fedminmax_risks"]
-            print(risks)
-            # need to get the different risk measures to send back to the server
-
-            # can we use the return of train?
-
+            self.risks = returns["fedminmax_risks"] # is return to the server to update weighing coefficients
         else: # Default case
             # Training and storing the parameters at the end of training.
             self.train(self.net, self.trainloader, epochs=local_epochs)
@@ -171,7 +167,14 @@ class FlowerClient(fl.client.NumPyClient):
         loss, accuracy, group_eod = self.test(self.net, self.valloader, sensitive_attributes)
         group_fairness = dict(zip(sensitive_attributes, group_eod))
 
-        return params, len(self.trainloader), {"cid":int(self.cid), "personal_parameters": self.per_params, "parameters": params, "accuracy": float(accuracy), "loss": float(loss), "group_fairness": group_fairness, "reward": float(reward)}
+        return params, len(self.trainloader), {"cid":int(self.cid), 
+                                               "personal_parameters": self.per_params,
+                                               "parameters": params, 
+                                               "accuracy": float(accuracy), 
+                                               "loss": float(loss), 
+                                               "group_fairness": group_fairness, 
+                                               "reward": float(reward), 
+                                               "risks": self.risks}
 
 def get_parameters(net) -> List[np.ndarray]:
     """taking state_dict values to numpy (state_dict holds learnable parameters) """
