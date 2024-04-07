@@ -163,9 +163,9 @@ def train(net, trainloader, epochs: int, option = None):
                         subset_loss = criterion(net(imgs), lbls)
                         subset_losses[s] += float(subset_loss)
                     # Calculating the key risk parameters
-                    risks = np.nan_to_num(np.array(subset_losses) / np.array(number_sensitive))
+                    risks = np.nan_to_num(np.array(subset_losses))
                     sum_risks += risks
-                    risk = np.sum((np.array(number_sensitive) / batch_size) * np.array(option["w"]) * risks)
+                    risk = np.sum((np.array(option["w"]) * risks) / batch_size)
                     fedminmax_manual_update(option["lr"], risk)
             else:
                 optimizer.step()

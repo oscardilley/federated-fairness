@@ -153,6 +153,7 @@ class FedMinMax(Strategy):
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         inplace: bool = True,
         lr = 0.001,
+        adverse_lr = 0.001,
         dataset_information = None,
         sensitive_attributes = []
     ) -> None:
@@ -177,13 +178,15 @@ class FedMinMax(Strategy):
         self.fit_metrics_aggregation_fn = fit_metrics_aggregation_fn
         self.evaluate_metrics_aggregation_fn = evaluate_metrics_aggregation_fn
         self.inplace = inplace
-        self.lr = lr
+        self.lr = lr # client learning rate
+        self.adverse_lr =adverse_lr # learning rate of the adversary at the server
         self.sensitive_attributes = sensitive_attributes
         self.total_samples = dataset_information["total"]
         self.total_sensitive = dataset_information["total_sensitive"]
         #total_sensitive_per_client = dataset_information["sensitive_per_client"] # probably not required
         self.rho = np.array([(i / self.total_samples) for i in self.total_sensitive])
         self.mu = self.rho # weighing coefficients initialised to rho
+        self.risks = None
 
 
     def __repr__(self) -> str:
@@ -230,9 +233,27 @@ class FedMinMax(Strategy):
         if self.on_fit_config_fn is not None:
             # Custom fit config function provided
             config = self.on_fit_config_fn(server_round)
-        # calculate the weights
-        risks = config["risks"]
-        print(risks)
+        if self.risks is None:
+            pass
+        else:
+            # Reassigning the weighing coefficients (projected gradient ascent to maximise objective)
+            # Using Euclidean projection from: https://doi.org/10.1145/1390156.1390191
+            cum_risks = [np.sum([a[i] for a in self.risks]) for i in range(len(self.sensitive_attributes))]
+            print(self.risks)
+            print(cum_risks)
+            avg_risks = [(cum_risks[i] / self.total_sensitive[i]) for i in range(len(self.sensitive_attributes))]
+            print(avg_risks)
+
+            # computing unbiased estimate of gradient of 
+            gradients = avg_risks
+
+
+
+            print(gradients)
+            self.mu = self.mu + (self.adverse_lr*gradients)
+            print(self.mu)
+        print(self.mu)
+        # calculate the weights:
         weights = (self.mu / self.rho) # weights initialised to 1,1,1,1,...
         # Passing weights, learning rate and sensitive attributes to each client
         fedminmax_parameters = {"opt": "fedminmax",

@@ -85,8 +85,8 @@ NUM_ROUNDS = 30
 BATCH_SIZE = 32
 SELECTION_RATE = 0.05 # what proportion of clients are selected per round
 SENSITIVE_ATTRIBUTES = [0,1,2,3,4,5,6,7,8,9] # digits are selected as the senstive labels for FEMNIST
-FEDMINMAX_LR = 0.05
-RISKS = None
+FEDMINMAX_LR = 0.1
+FEDMINMAX_ADVERSE_LR = 0.001
 path_extension = f'FedMinMax_CIFAR_iid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {
     "rounds": [],
@@ -126,7 +126,6 @@ def fit_config(server_round: int):
         "server_round": server_round, # The current round of federated learning
         "local_epochs": LOCAL_EPOCHS,
         "sensitive_attributes": SENSITIVE_ATTRIBUTES,
-        "risks": RISKS,
     }
     return config
 
@@ -154,7 +153,7 @@ def fit_callback(metrics: List[Tuple[int, Metrics]]) -> Metrics:
     """
     clients = set()
     parameters = [None for client in range(NUM_CLIENTS)]
-    RISKS = [metric["risks"] for _,metric in metrics]
+    strategy.risks = [metric["risks"] for _,metric in metrics] # updating the risk parameters
     # Why are the parameters we get here the post aggregation ones...?
     for client in metrics:
       cid = client[1]["cid"]
@@ -209,6 +208,7 @@ shap = Shapley(testloader, test, set_parameters, NUM_CLIENTS, Net().to(DEVICE))
 # Create FedAvg strategy:
 strategy = FedMinMax(
     lr = FEDMINMAX_LR,
+    adverse_lr = FEDMINMAX_ADVERSE_LR,
     sensitive_attributes = SENSITIVE_ATTRIBUTES,
     dataset_information = data_preprocess(NUM_CLIENTS, trainloaders, valloaders, SENSITIVE_ATTRIBUTES),
     fraction_fit=SELECTION_RATE, # sample all clients for training
