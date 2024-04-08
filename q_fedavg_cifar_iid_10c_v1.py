@@ -80,7 +80,7 @@ print(
 
 # Key parameter and data storage variables:
 NUM_CLIENTS = 10
-LOCAL_EPOCHS = 5
+LOCAL_EPOCHS = 10
 NUM_ROUNDS = 30
 BATCH_SIZE = 32
 SELECTION_RATE = 0.5 # what proportion of clients are selected per round

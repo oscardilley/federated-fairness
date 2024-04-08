@@ -70,9 +70,9 @@ import flwr as fl
 from flwr.common import Metrics
 # User defined module imports:
 from source.shapley import Shapley
-from source.cifar_net import Net, train, test
+from source.nslkdd_net import Net, train, test
 from source.client import FlowerClient, DEVICE, get_parameters, set_parameters
-from source.load_cifar import load_niid, load_iid
+from source.load_nslkdd import load_niid, load_iid
 
 print(
     f"Training on {DEVICE} using PyTorch {torch.__version__} and Flower {fl.__version__}"
@@ -87,7 +87,7 @@ SELECTION_RATE = 0.05 # what proportion of clients are selected per round
 SENSITIVE_ATTRIBUTES = [0,1,2,3,4,5,6,7,8,9] # digits are the senstive labels
 QFFL_LEARNING_RATE = 0.1
 Q_PARAM = 0.2
-path_extension = f'q_FedAvg_CIFAR_iid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
+path_extension = f'q_FedAvg_NSLKDD_iid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {
     "rounds": [],
     "general_fairness": {

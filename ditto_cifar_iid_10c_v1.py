@@ -80,7 +80,7 @@ print(
 
 # Key parameter and data storage variables:
 NUM_CLIENTS = 10
-LOCAL_EPOCHS = 5
+LOCAL_EPOCHS = 10
 NUM_ROUNDS = 30
 BATCH_SIZE = 32
 SELECTION_RATE = 0.5 # what proportion of clients are selected per round
@@ -88,7 +88,7 @@ SENSITIVE_ATTRIBUTES = [0,1,2,3,4,5,6,7,8,9] # digits are selected as the sensti
 personal_parameters = [None for client in range(NUM_CLIENTS)] # personal parameters stored globally as simulating - needs to be stored on client
 DITTO_LAMBDA = 0.8
 DITTO_ETA = 0.01
-DITTO_PERS_EPOCHS = 5
+DITTO_PERS_EPOCHS = LOCAL_EPOCHS
 path_extension = f'Ditto_CIFAR_iid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {
     "rounds": [],

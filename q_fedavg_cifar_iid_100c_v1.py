@@ -70,9 +70,9 @@ import flwr as fl
 from flwr.common import Metrics
 # User defined module imports:
 from source.shapley import Shapley
-from source.nslkdd_net import Net, train, test
+from source.cifar_net import Net, train, test
 from source.client import FlowerClient, DEVICE, get_parameters, set_parameters
-from source.load_nslkdd import load_niid, load_iid
+from source.load_cifar import load_niid, load_iid
 
 print(
     f"Training on {DEVICE} using PyTorch {torch.__version__} and Flower {fl.__version__}"
@@ -80,7 +80,7 @@ print(
 
 # Key parameter and data storage variables:
 NUM_CLIENTS = 100
-LOCAL_EPOCHS = 5
+LOCAL_EPOCHS = 10
 NUM_ROUNDS = 30
 BATCH_SIZE = 32
 SELECTION_RATE = 0.05 # what proportion of clients are selected per round

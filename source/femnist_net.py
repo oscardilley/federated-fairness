@@ -181,10 +181,10 @@ def test(net, testloader, sensitive_labels=[]):
             # Comparing the predicted to the inputs in order to determine EOD
             matched = (predicted == labels)
             for label in range(len(sensitive_labels)):
-              labelled = (labels == label)
-              not_labelled = (labels != label)
-              group_performance[label][0] += (matched == labelled).sum()
-              group_performance[label][1] += (matched == not_labelled).sum()
+                labelled = (labels == label)
+                not_labelled = (labels != label)
+                group_performance[label][0] += (matched == labelled).sum()
+                group_performance[label][1] += (matched == not_labelled).sum()
             total += length
             correct += matched.sum().item()
     for index in range(len(group_performance)):

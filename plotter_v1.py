@@ -46,9 +46,9 @@ import json
 def main():
   """ Main entry point"""
   # Config information - ensures plot annotations are correct:
-  STRATEGY = "Ditto" # "Ditto"/"FedAvg"/"q_FedAvg"/"FedMinMax"
+  STRATEGY = "q_FedAvg" # "Ditto"/"FedAvg"/"q_FedAvg"/"FedMinMax"
   DATASET = "NSLKDD" # "FEMNIST"/ "CIFAR"/ "NSLKDD"
-  SETTING = "iid" # "niid"/"iid"
+  SETTING = "niid" # "niid"/"iid"
   CLIENTS = 100 # 100/10/205
   PROPORTION = int((5 / CLIENTS) * 100)
   EPOCHS = 5 # 5 for FEMNIST and NSLKDD, 10 for CIFAR
