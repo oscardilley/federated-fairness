@@ -85,8 +85,8 @@ NUM_ROUNDS = 30
 BATCH_SIZE = 32
 SELECTION_RATE = 0.05 # what proportion of clients are selected per round
 SENSITIVE_ATTRIBUTES = [0,1,2,3,4,5,6,7,8,9] # digits are selected as the senstive labels for FEMNIST
-FEDMINMAX_LR = 0.1
-FEDMINMAX_ADVERSE_LR = 0.001
+FEDMINMAX_LR = 0.001
+FEDMINMAX_ADVERSE_LR = 0.1
 path_extension = f'FedMinMax_CIFAR_iid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {
     "rounds": [],

@@ -239,19 +239,17 @@ class FedMinMax(Strategy):
             # Reassigning the weighing coefficients (projected gradient ascent to maximise objective)
             # Using Euclidean projection from: https://doi.org/10.1145/1390156.1390191
             cum_risks = [np.sum([a[i] for a in self.risks]) for i in range(len(self.sensitive_attributes))]
-            print(self.risks)
-            print(cum_risks)
-            avg_risks = [(cum_risks[i] / self.total_sensitive[i]) for i in range(len(self.sensitive_attributes))]
-            print(avg_risks)
-
-            # computing unbiased estimate of gradient of 
-            gradients = avg_risks
-
-
-
-            print(gradients)
-            self.mu = self.mu + (self.adverse_lr*gradients)
-            print(self.mu)
+            avg_risks = -1*self.adverse_lr * np.array([(cum_risks[i] / self.total_sensitive[i]) for i in range(len(self.sensitive_attributes))])
+            # projection operation and calculations
+            gradients = np.flip(np.array(np.sort(avg_risks))) # the derivative of the function w.r.t the weights that is maximised in the strategy gives the avg risks, sorted high to low
+            rho_array = []
+            z = 1 # mapping to the probablistic simplex
+            for j in range(len(self.sensitive_attributes)):
+                if (gradients[j] - (1/(j+1))*np.sum(gradients[0:j]-z)) > 0:
+                    rho_array.append(j)
+            r = max(rho_array)
+            theta = (1/r) * np.sum(gradients[0:r]-z)
+            self.mu = [max(x-theta, 0) for x in (avg_risks)] # change this - to + if it doesnt work!
         print(self.mu)
         # calculate the weights:
         weights = (self.mu / self.rho) # weights initialised to 1,1,1,1,...
