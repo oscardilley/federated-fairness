@@ -125,10 +125,10 @@ def train(net, trainloader, epochs: int, option = None):
 
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(net.parameters())
+    net.train()
     for epoch in range(epochs):
         correct, total, epoch_loss = 0, 0, 0.0
         for i, data in enumerate(trainloader,0):
-            net.train()
             images, labels = data["img"].to(DEVICE), data["label"].to(DEVICE)
             batch_size = len(labels)
             optimizer.zero_grad()

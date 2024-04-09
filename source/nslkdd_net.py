@@ -99,6 +99,7 @@ def train(net, trainloader, epochs: int, option = None):
         epochs - the number of local epochs to train over
         option - a flag to enable alternative training regimes such as ditto
     """
+    sum_risks = None # Placeholder for fedminmax return
     def ditto_manual_update(lr, lam, glob):
         """ Manual parameter updates for ditto """
         with torch.no_grad():
@@ -109,6 +110,18 @@ def train(net, trainloader, epochs: int, option = None):
                 p.copy_(new_p)
                 counter += 1
             return
+
+    def ditto_manual_update(lr, lam, glob):
+        """ Manual parameter updates for ditto """
+        with torch.no_grad():
+            counter = 0
+            q = [torch.from_numpy(g).to(DEVICE) for g in glob]
+            for p in net.parameters():
+                new_p = p - lr*(p.grad + (lam * (p - q[counter])))
+                p.copy_(new_p)
+                counter += 1
+            return
+
     criterion = torch.nn.BCELoss()
     optimizer = torch.optim.Adam(net.parameters())
     net.train()
@@ -126,6 +139,34 @@ def train(net, trainloader, epochs: int, option = None):
             if option is not None:
                 if option["opt"] == "ditto":
                     ditto_manual_update(option["eta"], option["lambda"], option["global_params"])
+                if option["opt"] == "fedminmax":
+                    sensitive_attributes = option["attributes"]
+                    if sum_risks is None:
+                        sum_risks = np.array([0.0 for a in sensitive_attributes])
+                    subset_losses = [0 for a in sensitive_attributes]
+                    subsets = [[] for a in sensitive_attributes]
+                    number_sensitive = [0 for group in sensitive_attributes]
+                    # Building mini datasets for each sensitive attribute:
+                    for l in range(batch_size):
+                        try:
+                            i = sensitive_attributes.index(int(labels[l]))
+                        except:
+                            continue
+                        subsets[i].append(images[l])
+                        number_sensitive[i] += 1
+                    # Testing the mini datasets to determine the risks:
+                    for s in range(len(sensitive_attributes)):
+                        if subsets[s] == []:
+                            continue
+                        lbls = torch.Tensor([sensitive_attributes[s] for img in range(len(subsets[s]))]).long().to(DEVICE)
+                        imgs = (torch.stack(subsets[s])).to(DEVICE)
+                        subset_loss = criterion(net(imgs).squeeze(1), lbls.squeeze(1))
+                        subset_losses[s] += float(subset_loss)
+                    # Calculating the key risk parameters
+                    risks = np.nan_to_num(np.array(subset_losses))
+                    sum_risks += risks
+                    risk = np.sum((np.array(option["w"]) * risks) / batch_size)
+                    fedminmax_manual_update(option["lr"], risk)
             else:
                 optimizer.step()
             # Train metrics:
@@ -135,6 +176,7 @@ def train(net, trainloader, epochs: int, option = None):
         epoch_loss /= len(trainloader.dataset)
         epoch_acc = correct / total
         print(f"Epoch {epoch+1}: train loss {epoch_loss}, accuracy {epoch_acc}")
+    return {"fedminmax_risks": sum_risks}
 
 
 def test(net, testloader, sensitive_labels=[]):
