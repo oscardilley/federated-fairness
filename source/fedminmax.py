@@ -244,10 +244,16 @@ class FedMinMax(Strategy):
             gradients = np.flip(np.array(np.sort(avg_risks))) # the derivative of the function w.r.t the weights that is maximised in the strategy gives the avg risks, sorted high to low
             rho_array = []
             z = 1 # mapping to the probablistic simplex
+            print(gradients)
             for j in range(len(self.sensitive_attributes)):
+                print(gradients[j] - (1/(j+1))*np.sum(gradients[0:j]-z))
                 if (gradients[j] - (1/(j+1))*np.sum(gradients[0:j]-z)) > 0:
-                    rho_array.append(j)
-            r = max(rho_array)
+                    rho_array.append(j+1)
+            print(rho_array)
+            if rho_array != []:
+                r = max(rho_array)
+            else:
+                r = len(self.sensitive_attributes)
             theta = (1/r) * np.sum(gradients[0:r]-z)
             self.mu = [max(x-theta, 0) for x in (avg_risks)] # change this - to + if it doesnt work!
         print(self.mu)

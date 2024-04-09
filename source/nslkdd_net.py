@@ -111,15 +111,12 @@ def train(net, trainloader, epochs: int, option = None):
                 counter += 1
             return
 
-    def ditto_manual_update(lr, lam, glob):
-        """ Manual parameter updates for ditto """
+    def fedminmax_manual_update(lr, risk):
+        """ Manual parameter updates for FedMinMax strategy"""
         with torch.no_grad():
-            counter = 0
-            q = [torch.from_numpy(g).to(DEVICE) for g in glob]
             for p in net.parameters():
-                new_p = p - lr*(p.grad + (lam * (p - q[counter])))
+                new_p = p - (lr*(p.grad)*risk)
                 p.copy_(new_p)
-                counter += 1
             return
 
     criterion = torch.nn.BCELoss()
@@ -132,6 +129,7 @@ def train(net, trainloader, epochs: int, option = None):
             data.pop("class")
             inputs = torch.from_numpy(np.array([values.numpy() for key,values in data.items()], dtype=float)).to(DEVICE)
             inputs = inputs.mT # transpose required
+            batch_size = len(labels)
             optimizer.zero_grad()
             outputs = net(inputs)
             loss = criterion(outputs.squeeze(1), labels.squeeze(1))
@@ -152,15 +150,15 @@ def train(net, trainloader, epochs: int, option = None):
                             i = sensitive_attributes.index(int(labels[l]))
                         except:
                             continue
-                        subsets[i].append(images[l])
+                        subsets[i].append(inputs[l])
                         number_sensitive[i] += 1
                     # Testing the mini datasets to determine the risks:
                     for s in range(len(sensitive_attributes)):
                         if subsets[s] == []:
                             continue
-                        lbls = torch.Tensor([sensitive_attributes[s] for img in range(len(subsets[s]))]).long().to(DEVICE)
-                        imgs = (torch.stack(subsets[s])).to(DEVICE)
-                        subset_loss = criterion(net(imgs).squeeze(1), lbls.squeeze(1))
+                        lbls = torch.Tensor([sensitive_attributes[s] for img in range(len(subsets[s]))]).double().to(DEVICE)
+                        inpt = (torch.stack(subsets[s])).to(DEVICE)
+                        subset_loss = criterion(net(inpt).squeeze(1), lbls)
                         subset_losses[s] += float(subset_loss)
                     # Calculating the key risk parameters
                     risks = np.nan_to_num(np.array(subset_losses))

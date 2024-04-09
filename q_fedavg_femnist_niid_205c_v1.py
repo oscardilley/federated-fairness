@@ -86,7 +86,7 @@ BATCH_SIZE = 32
 SELECTION_RATE = 0.025 # what proportion of clients are selected per round
 SENSITIVE_ATTRIBUTES = [0,1,2,3,4,5,6,7,8,9] # digits are the senstive labels
 QFFL_LEARNING_RATE = 0.1
-Q_PARAM = 0.2
+Q_PARAM = 0.0005
 path_extension = f'q_FedAvg_FEMNIST_niid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {
     "rounds": [],

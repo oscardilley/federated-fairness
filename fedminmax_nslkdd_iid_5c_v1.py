@@ -80,14 +80,14 @@ print(
 
 # Key parameter and data storage variables:
 NUM_CLIENTS = 5
-LOCAL_EPOCHS = 10
+LOCAL_EPOCHS = 5
 NUM_ROUNDS = 30
 BATCH_SIZE = 32
 SELECTION_RATE = 1.0 # what proportion of clients are selected per round
-SENSITIVE_ATTRIBUTES = [0,1,2,3,4,5,6,7,8,9] # digits are selected as the senstive labels for FEMNIST
+SENSITIVE_ATTRIBUTES = [0] # digits are selected as the senstive labels for FEMNIST
 FEDMINMAX_LR = 0.0002
 FEDMINMAX_ADVERSE_LR = 0.001
-path_extension = f'FedMinMax_NSLKDD{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
+path_extension = f'FedMinMax_NSLKDD_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {
     "rounds": [],
     "general_fairness": {
