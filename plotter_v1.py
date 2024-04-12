@@ -46,7 +46,7 @@ import json
 def main():
   """ Main entry point"""
   # Config information - ensures plot annotations are correct:
-  STRATEGY = "q_FedAvg" # "Ditto"/"FedAvg"/"q_FedAvg"/"FedMinMax"
+  STRATEGY = "Ditto" # "Ditto"/"FedAvg"/"q_FedAvg"/"FedMinMax"
   DATASET = "FEMNIST" # "FEMNIST"/ "CIFAR"/ "NSLKDD"
   SETTING = "niid" # "niid"/"iid"
   CLIENTS = 205 # 100/10/205

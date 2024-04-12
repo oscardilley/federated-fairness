@@ -84,7 +84,7 @@ NUM_ROUNDS = 30
 BATCH_SIZE = 32
 SELECTION_RATE = 0.05 # what proportion of clients are selected per round
 SENSITIVE_ATTRIBUTES = [1] # sensitive attribute is the anomolous case
-path_extension = f'FedAvg_NSLKDD_iid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R_v3'
+path_extension = f'FedAvg_NSLKDD_iid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {
     "rounds": [],
     "general_fairness": {
