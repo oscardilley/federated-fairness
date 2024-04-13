@@ -50,7 +50,9 @@ The project uses the Flower simulations and was run on an NVIDIA A40 GPU.
 ├── README.md
 ├── Results
 │   ├── Ditto_CIFAR_iid_100C_5PC_10E_30R_v1.json
-│   │   ... .json results files
+│   ├── ...
+│   │   <.json results files>
+│   ├── ...
 │   ├── q_FedAvg_NSLKDD_niid_100C_5PC_5E_30R_v3.json
 │   ├── Old
 │   │   ├── archived .json results
@@ -59,7 +61,9 @@ The project uses the Flower simulations and was run on an NVIDIA A40 GPU.
 │   │   ├   ... .png result images
 │   │   └── q_FedAvg_NSLKDD_niid_100C_tS.png
 ├── ditto_cifar_iid_100c_v1.py
-├── ... individual experiment .py files
+├── ...
+├── <individual experiment .py files>
+├── ...
 ├── q_fedavg_nslkdd_niid_100c_v1.py
 ├── plotter_v1.py
 └── source 
