@@ -55,10 +55,12 @@ The project uses the Flower simulations and was run on an NVIDIA A40 GPU.
 │   ├── ...
 │   ├── q_FedAvg_NSLKDD_niid_100C_5PC_5E_30R_v3.json
 │   ├── Old
-│   │   ├── archived .json results
+│   │   └── archived .json results
 │   ├── Plots
 │   │   ├── Ditto_CIFAR_iid_100C_bar.png
-│   │   ├   ... .png result images
+│   │   ├── ...
+│   │   │   <.png result images>
+│   │   ├── ...
 │   │   └── q_FedAvg_NSLKDD_niid_100C_tS.png
 ├── ditto_cifar_iid_100c_v1.py
 ├── ...
