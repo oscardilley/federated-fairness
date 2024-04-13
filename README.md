@@ -63,7 +63,7 @@ The project uses the Flower simulations and was run on an NVIDIA A40 GPU.
 ├── q_fedavg_nslkdd_niid_100c_v1.py
 ├── plotter_v1.py
 └── source 
-    ├── cifar_net.py
+    ├── cifar_net.py 
     ├── client.py
     ├── ditto.py
     ├── fedminmax.py
@@ -72,6 +72,7 @@ The project uses the Flower simulations and was run on an NVIDIA A40 GPU.
     ├── load_nslkdd.py
     ├── nslkdd_net.py
     └── shapley.py
+
 ~~~
 
 
