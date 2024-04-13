@@ -10,7 +10,7 @@
 
 For federated learning to be trusted for real world application, particularly where avoiding bias is of critical importance and where data protection legislation such as GDPR limited the ability of the server to validate decisions against datasets directly - the implications of federated learning upon fairness must be better understood. In the current state of the art surveys, the lack of clear definitions or metrics to quantify fairness in federated learning is cited as a key open problem. This project proposes definitions for a number of notions of fairness with corresponding metrics in order to quanity such fairess. The metrics are used to benchmark a number of existing approaches offering a unique insight into fairness performance and improving explainability and transparency of systems, without violating data privacy.
 
-
+> *_NOTE:_*  The note content.
 
 
 ~~~
@@ -43,6 +43,34 @@ The project uses the Flower simulations and was run on an NVIDIA A40 GPU.
 
 ## Assumptions and Applicability
 
+## Repository Structure
+
+├── LICENSE
+├── README.md
+├── Results
+│   ├── Ditto_CIFAR_iid_100C_5PC_10E_30R_v1.json
+|   | ... results JSONs
+|   └── q_FedAvg_NSLKDD_niid_100C_5PC_5E_30R_v3.json
+│   ├── Old
+│   │   | ... archived results
+│   ├── Plots
+│   │   ├── Ditto_CIFAR_iid_100C_bar.png
+|   |   | ... plots .png files
+│   │   └── q_FedAvg_NSLKDD_niid_100C_tS.png
+├── ditto_cifar_iid_100c_v1.py
+... experiments
+├── q_fedavg_nslkdd_niid_100c_v1.py
+├── requirements.txt
+└── source
+    ├── cifar_net.py
+    ├── client.py
+    ├── ditto.py
+    ├── fedminmax.py
+    ├── femnist_net.py
+    ├── load_cifar.py
+    ├── load_nslkdd.py
+    ├── nslkdd_net.py
+    └── shapley.py
 
 ## License
 
