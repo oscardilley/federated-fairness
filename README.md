@@ -8,9 +8,9 @@
 
 ## About
 
-For federated learning to be trusted for real world application, particularly where avoiding bias is of critical importance and where data protection legislation such as GDPR limited the ability of the server to validate decisions against datasets directly - the implications of federated learning upon fairness must be better understood. In the current state of the art surveys, the lack of clear definitions or metrics to quantify fairness in federated learning is cited as a key open problem. This project proposes definitions for a number of notions of fairness with corresponding metrics in order to quanity such fairess. The metrics are used to benchmark a number of existing approaches offering a unique insight into fairness performance and improving explainability and transparency of systems, without violating data privacy.
+For federated learning to be trusted for real world application, particularly where avoiding bias is of critical importance and where data protection legislation such as GDPR limits the ability of the server to validate decisions against datasets directly - the implications of federated learning upon fairness must be better understood. In the current state of the art surveys, the lack of clear definitions or metrics to quantify fairness in federated learning is cited as a key open problem. This project proposes definitions for a number of notions of fairness with corresponding metrics in order to quanity such fairness. The metrics are used to benchmark a number of existing approaches offering a unique insight into fairness performance and improving explainability and transparency of systems, without violating data privacy.
 
-> **NOTE:** This repository demonstrates the output output of my final year Electrical and Electronic Engineering MEng, Individual Research Project at the University of Bristol.
+> **NOTE:** This repository demonstrates the output of my final year Electrical and Electronic Engineering MEng, Individual Research Project at the University of Bristol.
 > 
 
 ## Tools and Resources
