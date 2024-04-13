@@ -89,7 +89,7 @@ personal_parameters = [None for client in range(NUM_CLIENTS)] # personal paramet
 DITTO_LAMBDA = 0.8
 DITTO_ETA = 0.01
 DITTO_PERS_EPOCHS = LOCAL_EPOCHS
-path_extension = f'Ditto_CIFAR_niid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
+path_extension = f'Ditto_CIFAR_niid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R_v3'
 data = {
     "rounds": [],
     "general_fairness": {

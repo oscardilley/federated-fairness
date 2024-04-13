@@ -47,11 +47,11 @@ def main():
   """ Main entry point"""
   # Config information - ensures plot annotations are correct:
   STRATEGY = "Ditto" # "Ditto"/"FedAvg"/"q_FedAvg"/"FedMinMax"
-  DATASET = "FEMNIST" # "FEMNIST"/ "CIFAR"/ "NSLKDD"
+  DATASET = "CIFAR" # "FEMNIST"/ "CIFAR"/ "NSLKDD"
   SETTING = "niid" # "niid"/"iid"
-  CLIENTS = 205 # 100/10/205
+  CLIENTS = 100 # 100/10/205
   PROPORTION = int((5 / CLIENTS) * 100)
-  EPOCHS = 5 # 5 for FEMNIST and NSLKDD, 10 for CIFAR
+  EPOCHS = 10 # 5 for FEMNIST and NSLKDD, 10 for CIFAR
   ROUNDS = 30
   NUMBER_REPEATS = 3
   # initialising data structures
