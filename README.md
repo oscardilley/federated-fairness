@@ -45,7 +45,7 @@ The project uses the Flower simulations and was run on an NVIDIA A40 GPU.
 
 ## Repository Structure
 
-'''bash
+~~~bash
 ├── LICENSE
 ├── README.md
 ├── Results
@@ -228,7 +228,7 @@ The project uses the Flower simulations and was run on an NVIDIA A40 GPU.
     ├── load_nslkdd.py
     ├── nslkdd_net.py
     └── shapley.py
-'''
+~~~
 
 
 ## License
