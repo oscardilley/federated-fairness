@@ -4,7 +4,7 @@
 ![Static Badge](https://img.shields.io/badge/federated_analytics-red)
 ![Static Badge](https://img.shields.io/badge/fairness-blue)
 ![Static Badge](https://img.shields.io/badge/XAI-yellow)
-[![Email Badge](https://img.shields.io/badge/Contact_Me-pink)](mailto:test@test.com)
+[![Email Badge](https://img.shields.io/badge/Contact-Email-pink)](mailto:test@test.com)
 
 ## About
 
