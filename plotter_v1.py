@@ -41,19 +41,21 @@ from typing import Dict, List, Optional, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 import json
+import sys
 
 
-def main():
+def main(strategy, dataset, setting, clients, epochs):
   """ Main entry point"""
   # Config information - ensures plot annotations are correct:
-  STRATEGY = "Ditto" # "Ditto"/"FedAvg"/"q_FedAvg"/"FedMinMax"
-  DATASET = "CIFAR" # "FEMNIST"/ "CIFAR"/ "NSLKDD"
-  SETTING = "niid" # "niid"/"iid"
-  CLIENTS = 100 # 100/10/205
+  STRATEGY = strategy # "Ditto"/"FedAvg"/"q_FedAvg"/"FedMinMax"
+  DATASET = dataset # "FEMNIST"/ "CIFAR"/ "NSLKDD"
+  SETTING = setting # "niid"/"iid"
+  CLIENTS = clients # 100/10/205
   PROPORTION = int((5 / CLIENTS) * 100)
-  EPOCHS = 10 # 5 for FEMNIST and NSLKDD, 10 for CIFAR
+  EPOCHS = epochs # 5 for FEMNIST and NSLKDD, 10 for CIFAR
   ROUNDS = 30
   NUMBER_REPEATS = 3
+  r=15 - 1 # defines round range to display on bar chart
   # initialising data structures
   data_structure = {
     "rounds": [],
@@ -92,7 +94,7 @@ def main():
                         plot_string = f"{STRATEGY}, {DATASET}, {SETTING}, $\mu_s={round((5 / CLIENTS) * 100 , 1)}$%, $C={CLIENTS}$"
                         )
   # Producing Plots
-  plotter.bar(figure_path)
+  plotter.bar(figure_path, r)
   plotter.timeSeries(figure_path)
   return 
 
@@ -145,17 +147,17 @@ class FairnessEval():
       self.plot_string = plot_string
       return
 
-  def bar(self, path):
+  def bar(self, path, r):
       # Plotting a bar chart of the average with error bars
       fig, ax = plt.subplots(1)
-      fig.suptitle(f"Average Fairness From Round 5 to {max(self.rounds)+1}", fontsize = 15)
+      fig.suptitle(f"Average Fairness From Round {r+1} to {int(max(self.rounds)+1)}", fontsize = 15)
       ax.grid(axis = "y", linewidth = 0.5, linestyle = "--")
       ax.set_axisbelow(True)
-      metrics = [np.mean(np.array(self.f_j)),np.mean(np.array(self.f_g)),np.mean(np.array(self.f_r)),max(self.f_o)]
-      f_max = lambda f: max(f) - np.mean(np.array(f))
-      f_min = lambda f: np.mean(np.array(f)) - min(f)
-      iqr_low = lambda f: np.mean(np.array(f)) - np.percentile(f, 25)
-      iqr_high = lambda f: np.percentile(f, 75) - np.mean(np.array(f))
+    #   metrics = [np.mean(np.array(self.f_j)),np.mean(np.array(self.f_g)),np.mean(np.array(self.f_r)),max(self.f_o)]
+    #   f_max = lambda f: max(f) - np.mean(np.array(f))
+    #   f_min = lambda f: np.mean(np.array(f)) - min(f)
+    #   iqr_low = lambda f: np.mean(np.array(f)) - np.percentile(f, 25)
+    #   iqr_high = lambda f: np.percentile(f, 75) - np.mean(np.array(f))
       # ax.bar(self.labels, metrics, color=[self.colour[0], self.colour[2], self.colour[3], self.colour[4]], linewidth = 0, alpha = 0.7)
       # ax.bar(self.labels, metrics, edgecolor = [self.colour[0], self.colour[2], self.colour[3], self.colour[4]], linewidth = 2, fill = False)
       # ax.errorbar(self.labels, metrics, yerr=[[f_min(self.f_j),f_min(self.f_g),f_min(self.f_r),f_min(self.f_o)],
@@ -167,10 +169,10 @@ class FairnessEval():
       # ax.errorbar(self.labels, metrics, yerr=[[iqr_low(self.f_j),iqr_low(self.f_g),iqr_low(self.f_r),iqr_low(self.f_o)],
       #                                    [iqr_high(self.f_j),iqr_high(self.f_g),iqr_high(self.f_r),iqr_high(self.f_o)]],
       #                                    fmt = "ok", capsize = 12)
-      general_fairness = np.mean(np.array([self.f_j[5:], self.f_g[5:], self.f_r[5:], self.f_o[5:]]))
+      general_fairness = np.mean(np.array([self.f_j[r:], self.f_g[r:], self.f_r[r:], self.f_o[r:]]))
       ax.axhline(general_fairness, linewidth = 1.5, color='k', linestyle='--')
       ax.annotate(f"$F_T$={round(general_fairness,2)}", [3.29, general_fairness + 0.015])
-      box = ax.boxplot([self.f_j[5:], self.f_g[5:], self.f_r[5:], self.f_o[5:]], notch = False, patch_artist=True, labels=self.labels, sym="+")
+      box = ax.boxplot([self.f_j[r:], self.f_g[r:], self.f_r[r:], self.f_o[r:]], notch = False, patch_artist=True, labels=self.labels, sym="+")
       for median, whisker, cap in zip(box['medians'], box['whiskers'], box['caps']):
           median.set_color("k")
           whisker.set_color("k")
@@ -185,7 +187,7 @@ class FairnessEval():
       ax.set_ylabel("Normalised Fairness", fontsize = 12)
       ax.set_title(self.plot_string, fontsize = 12)
       ax.set_ylim([0,1.1])
-      plt.gcf().savefig(path + '_bar.png', dpi = 400)
+      plt.gcf().savefig(path + '_bar_v2.png', dpi = 400)
       return
 
   def timeSeries(self, path):
@@ -215,13 +217,38 @@ class FairnessEval():
       labels.append("Mean Fairness, $F_T$")
       ax.legend(labels, fontsize = 8)
       ax.set_xlabel("Round", fontsize = 12)
-      ax.set_xticks([0,5,10,15,20,25,30], [0,5,10,15,20,25,30])
+      ax.set_xticks([4,9,14,19,24,29], [5,10,15,20,25,30])
       ax.set_ylabel("Normalised Fairness", fontsize = 12)
       ax.set_title(self.plot_string, fontsize = 12)
       ax.set_ylim([0,1.1])
       ax.set_xlim([min(self.rounds), max(self.rounds)])
-      plt.gcf().savefig(path + '_tS.png', dpi = 400)
+      plt.gcf().savefig(path + '_tS_v1.png', dpi = 400)
       return
 
+class UserInputError(Exception):
+    pass
+
 if __name__ == "__main__":
-  main()
+    if len(sys.argv) != 4:
+        raise UserInputError("Please enter correct number of command line arguments")
+    if sys.argv[1] not in ["FedAvg", "Ditto", "q_FedAvg", "FedMinMax"]:
+        raise UserInputError("Invalid Strategy Provided")
+    if sys.argv[2] == "NSLKDD":
+        n = 100
+        e = 5
+    elif sys.argv[2] == "FEMNIST":
+        n = 205
+        e = 5
+    elif sys.argv[2] == "10CIFAR":
+        n = 10
+        e = 10
+        sys.argv[2] = "CIFAR"
+    elif sys.argv[2] == "100CIFAR":
+        n = 100
+        e = 10
+        sys.argv[2] = "CIFAR"
+    else:
+        raise UserInputError("Invalid Dataset Provided")
+    if sys.argv[3] not in ["niid", "iid"]:
+        raise UserInputError("Invalid Data Setting Provided")
+    main(strategy = sys.argv[1], dataset = sys.argv[2], setting = sys.argv[3], clients = n, epochs=e)

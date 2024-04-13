@@ -87,7 +87,7 @@ SELECTION_RATE = 0.05 # what proportion of clients are selected per round
 SENSITIVE_ATTRIBUTES = [0,1,2,3,4,5,6,7,8,9] # digits are the senstive labels
 QFFL_LEARNING_RATE = 0.1
 Q_PARAM = 0.2
-path_extension = f'q_FedAvg_NSLKDD_iid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
+path_extension = f'q_FedAvg_CIFAR_iid_{NUM_CLIENTS}C_{int(SELECTION_RATE * 100)}PC_{LOCAL_EPOCHS}E_{NUM_ROUNDS}R'
 data = {
     "rounds": [],
     "general_fairness": {
