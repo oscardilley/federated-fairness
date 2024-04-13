@@ -129,11 +129,6 @@ def averager(data, skeleton):
 class FairnessEval():
   """
   A class designed to extract and display the fairness data analysed for the FL system.
-
-
-
-
-
   """
   def __init__(self,*, rounds=None, f_j=None, f_g=None, f_r=None, f_o=None, plot_string = "<enter here>"):
       self.f_j = f_j
