@@ -10,23 +10,26 @@
 
 For federated learning to be trusted for real world application, particularly where avoiding bias is of critical importance and where data protection legislation such as GDPR limited the ability of the server to validate decisions against datasets directly - the implications of federated learning upon fairness must be better understood. In the current state of the art surveys, the lack of clear definitions or metrics to quantify fairness in federated learning is cited as a key open problem. This project proposes definitions for a number of notions of fairness with corresponding metrics in order to quanity such fairess. The metrics are used to benchmark a number of existing approaches offering a unique insight into fairness performance and improving explainability and transparency of systems, without violating data privacy.
 
+
+
+
 ~~~
-Test
+Copyable code block
 ~~~
-'''
-Test2
-'''
+
 
 
 use a note to mention that it is part of a university masters project
 
 ## Tools and Resources
 
-flower - links
-datasets
-pytorch
-NVIDIA A40
-hugging face
+The project would not be possible without the fantastic array of open-source tools and datasets that fasciliate federated learning research. This project utilises:
+* [Flower](https://flower.ai/docs/framework/index.html#)
+* Hugging Face Datasets including [NSL-KDD](https://huggingface.co/datasets/Mireu-Lab/NSL-KDD) and [CIFAR-10](https://huggingface.co/datasets/cifar10)
+* PyTorch
+* TensorFlow Federated Datasets to utilise the natural partioning of the LEAF dataset, [FEMNIST](https://www.tensorflow.org/federated/api_docs/python/tff/simulation/datasets/emnist)
+
+The project uses the Flower simulations and was run on an NVIDIA A40 GPU.
 
 
 ## Notions of Fairness
