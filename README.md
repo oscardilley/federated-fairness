@@ -46,30 +46,55 @@ The project uses the Flower simulations and was run on an NVIDIA A40 GPU.
 ## Repository Structure
 
 ├── LICENSE
+
 ├── README.md
+
 ├── Results
+
 │   ├── Ditto_CIFAR_iid_100C_5PC_10E_30R_v1.json
+
 |   | ... results JSONs
+
 |   └── q_FedAvg_NSLKDD_niid_100C_5PC_5E_30R_v3.json
+
 │   ├── Old
+
 │   │   | ... archived results
+
 │   ├── Plots
+
 │   │   ├── Ditto_CIFAR_iid_100C_bar.png
+
 |   |   | ... plots .png files
+
 │   │   └── q_FedAvg_NSLKDD_niid_100C_tS.png
+
 ├── ditto_cifar_iid_100c_v1.py
+
 ... experiments
+
 ├── q_fedavg_nslkdd_niid_100c_v1.py
+
 ├── requirements.txt
+
 └── source
+
     ├── cifar_net.py
+    
     ├── client.py
+    
     ├── ditto.py
+    
     ├── fedminmax.py
+    
     ├── femnist_net.py
+    
     ├── load_cifar.py
+    
     ├── load_nslkdd.py
+    
     ├── nslkdd_net.py
+    
     └── shapley.py
 
 ## License
