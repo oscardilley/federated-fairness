@@ -1,7 +1,7 @@
 # Federated Fairness Analytics
 
 ![GitHub License](https://img.shields.io/github/license/oscardilley/federated-fairness?logoColor=green)
-[![Email Badge](https://img.shields.io/badge/Contact-Email-pink)](mailto:test@test.com)
+[![Email Badge](https://img.shields.io/badge/Contact-Email-pink)](mailto:tundra.01pitches@icloud.com)
 ![Static Badge](https://img.shields.io/badge/federated_analytics-red)
 ![Static Badge](https://img.shields.io/badge/fairness-blue)
 ![Static Badge](https://img.shields.io/badge/XAI-yellow)
