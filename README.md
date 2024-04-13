@@ -1,5 +1,8 @@
 # Federated Fairness Analytics
-Lots coming soon...
 
-![Static Badge](https://img.shields.io/badge/any_text-you_like-blue)
+![GitHub License](https://img.shields.io/github/license/:user/:repo)
+
+![Static Badge](https://img.shields.io/badge/federated_analytics-red)
+
+![Static Badge](https://img.shields.io/badge/fairness-blue)
 
