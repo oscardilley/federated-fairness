@@ -1,12 +1,12 @@
 """
 -------------------------------------------------------------------------------------------------------------
 
-ploter_v1.py, , v1.0
+plotter_1.py, , v1.0
 by Oscar, April 2024
 
 -------------------------------------------------------------------------------------------------------------
 
-MatPlotLib Plotting Script
+MatPlotLib Plotting Script to create bar plots and time series for different individual experiments.
 
 -------------------------------------------------------------------------------------------------------------
 
@@ -35,8 +35,8 @@ limitations under the License.
 -------------------------------------------------------------------------------------------------------------
 """
 
-from collections import OrderedDict
-from typing import Dict, List, Optional, Tuple
+#from collections import OrderedDict
+#from typing import Dict, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -117,10 +117,6 @@ def averager(data, skeleton):
                 output[key] = [np.mean(np.array([a[key][i] for a in d])) for i in range(len(d[0][key]))]
         return output
 
-
-
-      # need to keep config unchanged
-    
     return average_dicts(data, skeleton)
 
 
@@ -148,22 +144,6 @@ class FairnessEval():
       fig.suptitle(f"Average Fairness From Round {r+1} to {int(max(self.rounds)+1)}", fontsize = 15)
       ax.grid(axis = "y", linewidth = 0.5, linestyle = "--")
       ax.set_axisbelow(True)
-    #   metrics = [np.mean(np.array(self.f_j)),np.mean(np.array(self.f_g)),np.mean(np.array(self.f_r)),max(self.f_o)]
-    #   f_max = lambda f: max(f) - np.mean(np.array(f))
-    #   f_min = lambda f: np.mean(np.array(f)) - min(f)
-    #   iqr_low = lambda f: np.mean(np.array(f)) - np.percentile(f, 25)
-    #   iqr_high = lambda f: np.percentile(f, 75) - np.mean(np.array(f))
-      # ax.bar(self.labels, metrics, color=[self.colour[0], self.colour[2], self.colour[3], self.colour[4]], linewidth = 0, alpha = 0.7)
-      # ax.bar(self.labels, metrics, edgecolor = [self.colour[0], self.colour[2], self.colour[3], self.colour[4]], linewidth = 2, fill = False)
-      # ax.errorbar(self.labels, metrics, yerr=[[f_min(self.f_j),f_min(self.f_g),f_min(self.f_r),f_min(self.f_o)],
-      #                                    [f_max(self.f_j),f_max(self.f_g),f_max(self.f_r),f_max(self.f_o)]],
-      #                                    fmt = ".r", capsize = 3)
-      # ax.errorbar(self.labels, metrics, yerr=[[iqr_low(self.f_j),iqr_low(self.f_g),iqr_low(self.f_r),iqr_low(self.f_o)],
-      #                                    [iqr_high(self.f_j),iqr_high(self.f_g),iqr_high(self.f_r),iqr_high(self.f_o)]],
-      #                                    fmt = "ok", capsize = 12)
-      # ax.errorbar(self.labels, metrics, yerr=[[iqr_low(self.f_j),iqr_low(self.f_g),iqr_low(self.f_r),iqr_low(self.f_o)],
-      #                                    [iqr_high(self.f_j),iqr_high(self.f_g),iqr_high(self.f_r),iqr_high(self.f_o)]],
-      #                                    fmt = "ok", capsize = 12)
       general_fairness = np.mean(np.array([self.f_j[r:], self.f_g[r:], self.f_r[r:], self.f_o[r:]]))
       ax.axhline(general_fairness, linewidth = 1.5, color='k', linestyle='--')
       ax.annotate(f"$F_T$={round(general_fairness,2)}", [3.29, general_fairness + 0.015])

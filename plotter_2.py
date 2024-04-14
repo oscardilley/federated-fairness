@@ -1,0 +1,139 @@
+"""
+-------------------------------------------------------------------------------------------------------------
+
+plotter_2.py, , v1.0
+by Oscar, April 2024
+
+-------------------------------------------------------------------------------------------------------------
+
+MatPlotLib Plotting Script for creating plots that compare different experiments directly
+
+-------------------------------------------------------------------------------------------------------------
+
+Declarations, functions and classes:
+- 
+
+-------------------------------------------------------------------------------------------------------------
+
+Usage:
+
+
+-------------------------------------------------------------------------------------------------------------
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+-------------------------------------------------------------------------------------------------------------
+"""
+
+import matplotlib.pyplot as plt
+import numpy as np
+import json
+import sys
+
+def main(file_names, input_args):
+    """ Main entry point"""
+    NUMBER_REPEATS = 3
+    PATH = './Results/Plots/xTesting'
+    temp = [None for i in range(NUMBER_REPEATS)]
+    data_structure = {
+    "rounds": [],
+    "general_fairness": {
+          "f_j": [],
+          "f_g": [],
+          "f_r": [],
+          "f_o": []},
+      "config": {
+          "num_clients": 0,
+          "local_epochs": 0,
+          "num_rounds": 0,
+          "batch_size": 0,
+          "selection_rate": 0,
+          "sensitive_attributes": []},
+      "per_client_data": {
+            "shap": [],
+            "accuracy": [],
+            "avg_eop": [],
+            "gains": []}}
+    general_fairness = []
+    rounds = []
+    for file in file_names:
+        for repeat in range(NUMBER_REPEATS):
+            with open("./Results/" + file + f"_v{repeat+1}.json", "r") as openfile:
+                temp[repeat] = json.load(openfile)
+        # Data processing
+        data = averager(temp, data_structure)
+        average = np.array([np.mean(np.array([data["general_fairness"]["f_j"][i], data["general_fairness"]["f_g"][i], data["general_fairness"]["f_r"][i], data["general_fairness"]["f_o"][i]])) for i in range(len(data["rounds"]))])
+        general_fairness.append(average) # Imported the JSON as a dictionary
+        rounds.append(np.array(data["rounds"]))
+        # Potential to extract largest range from the values and plot the range too
+
+
+        # Label processing from filename using underscore delimitter:
+
+
+    time_series(rounds, general_fairness, PATH)
+    return
+
+
+def time_series(x, y, savepath, labels = []):
+    """ Plotting general fairness timeseries of the inputted files """
+    num_lines = len(x)
+    fig,ax = plt.subplots(1)
+    fig.suptitle("Timeseries Fairness Evaluation", fontsize = 15)
+    ax.grid(linewidth = 0.5, linestyle = "--")
+    ax.set_axisbelow(True)
+    for p in range(num_lines):
+        ax.scatter(x[p], y[p], linewidth = 0.1)
+        a,b,c,d = np.polyfit(x[p], y[p], 3)
+        ax.plot(x[p], (a*(x[p]**3)) + (b*(x[p]**2)) + c*x[p] + d, linewidth = 1.2)
+
+    ax.set_xticks([4,9,14,19,24,29], [5,10,15,20,25,30])
+    ax.set_ylim([0,1.1])
+    ax.set_xlim([0, 30])
+    plt.gcf().savefig(savepath + '_tS_v1.png', dpi = 400)
+    return
+    
+
+
+
+
+def averager(data, skeleton):
+    """Cleaning and computing the average of a number of repeats of identically formatted data"""
+    l = len(data)
+    def average_dicts(d, s):
+        """ """
+        output = s # initalise the output empty
+        for key, val in s.items():
+            if type(val) is dict:
+                if key == "config": # don't average config dict, set as any of the configs
+                    output[key] = d[0][key]
+                elif key == "per_client_data":
+                    continue # skipping processing this as not necessary currently
+                else:
+                    # going down to the next layer
+                    output[key] = average_dicts([b[key] for b in d], val)
+            else: # assumed list
+                output[key] = [np.mean(np.array([a[key][i] for a in d])) for i in range(len(d[0][key]))]
+        return output
+    
+    return average_dicts(data, skeleton)
+
+
+if __name__ == "__main__":
+    # Select the experiments you want to be processed by listing their file name below
+    file_names = ["FedAvg_FEMNIST_niid_205C_2PC_5E_30R",
+                  "FedAvg_FEMNIST_iid_205C_2PC_5E_30R",
+                  "q_FedAvg_FEMNIST_niid_205C_2PC_5E_30R",
+                  "q_FedAvg_FEMNIST_iid_205C_2PC_5E_30R"
+    ]
+    main(file_names, sys.argv[1:])
