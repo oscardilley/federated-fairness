@@ -77,6 +77,7 @@ def main(strategy, dataset, setting, clients, epochs):
             "avg_eop": [],
             "gains": []}}
   path_extensions = [f'{STRATEGY}_{DATASET}_{SETTING}_{CLIENTS}C_{PROPORTION}PC_{EPOCHS}E_{ROUNDS}R_v{i+1}.json' for i in range(NUMBER_REPEATS)]
+  print(path_extensions)
   temp = [None for i in range(NUMBER_REPEATS)]
 
   for repeat in range(NUMBER_REPEATS):

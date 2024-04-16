@@ -65,7 +65,10 @@ def main(file_names, input_args):
             "avg_eop": [],
             "gains": []}}
     general_fairness = []
+    performance = []
     rounds = []
+    labels = []
+    r = 20 # taking average of round r to end for scatter plot
     for file in file_names:
         for repeat in range(NUMBER_REPEATS):
             with open("./Results/" + file + f"_v{repeat+1}.json", "r") as openfile:
@@ -73,15 +76,21 @@ def main(file_names, input_args):
         # Data processing
         data = averager(temp, data_structure)
         average = np.array([np.mean(np.array([data["general_fairness"]["f_j"][i], data["general_fairness"]["f_g"][i], data["general_fairness"]["f_r"][i], data["general_fairness"]["f_o"][i]])) for i in range(len(data["rounds"]))])
+        f_o = np.array([data["general_fairness"]["f_o"][i] for i in range(len(data["rounds"]))])
         general_fairness.append(average) # Imported the JSON as a dictionary
+        performance.append(f_o)
         rounds.append(np.array(data["rounds"]))
-        # Potential to extract largest range from the values and plot the range too
-
-
-        # Label processing from filename using underscore delimitter:
-
-
-    time_series(rounds, general_fairness, PATH)
+    # Label processing from filename using underscore delimitter:
+    datasets = {"CIFAR": "CIFAR-10", "FEMNIST": "FEMNIST", "NSLKDD": "NSL-KDD"}
+    clients = {"10C": "10 Clients", "100C": "100 Clients", "205C": "205 Clients"}
+    for file in file_names:
+        parts = file.split("_")
+        if parts[0] == "q":
+            parts.remove("q")
+            parts[0] = "q-FedAvg"
+        labels.append(f"{parts[0]}, {datasets[parts[1]]} {parts[2]}, {clients[parts[3]]}")
+    time_series(rounds, general_fairness, PATH, labels)
+    scatter([np.mean(i[r:]) for i in performance], [np.mean(i[r:]) for i in general_fairness], PATH, labels)
     return
 
 
@@ -94,17 +103,39 @@ def time_series(x, y, savepath, labels = []):
     ax.set_axisbelow(True)
     for p in range(num_lines):
         ax.scatter(x[p], y[p], linewidth = 0.1)
+        # a,b,c,d,e,f = np.polyfit(x[p], y[p], 5)
+        # ax.plot(x[p], (a*(x[p]**5)) + (b*(x[p]**4)) + (c*(x[p]**3)) + (d*(x[p]**2)) + e*x[p] + f, linewidth = 1.2, label = labels[p])
         a,b,c,d = np.polyfit(x[p], y[p], 3)
-        ax.plot(x[p], (a*(x[p]**3)) + (b*(x[p]**2)) + c*x[p] + d, linewidth = 1.2)
-
+        ax.plot(x[p], (a*(x[p]**3)) + (b*(x[p]**2)) + c*x[p] + d, linewidth = 1.2, label = labels[p])
+        # a,b,c = np.polyfit(x[p], y[p], 2)
+        # ax.plot(x[p], (a*(x[p]**2)) + b*x[p] + c, linewidth = 1.2, label = labels[p])
     ax.set_xticks([4,9,14,19,24,29], [5,10,15,20,25,30])
     ax.set_ylim([0,1.1])
     ax.set_xlim([0, 30])
+    ax.legend(fontsize = 8)
+    ax.set_ylabel("General Fairness, $F_T$", fontsize = 12)
+    ax.set_xlabel("Round", fontsize = 12)
     plt.gcf().savefig(savepath + '_tS_v1.png', dpi = 400)
     return
     
 
+def scatter(x , y , savepath, labels = []):
+    """ Showing the performance of a range of implementations"""
+    num_lines = len(x)
+    fig,ax = plt.subplots(1)
+    fig.suptitle("Comparitive Fairness Evaluation", fontsize = 15)
+    ax.grid(linewidth = 0.5, linestyle = "--")
+    ax.set_axisbelow(True)
+    for p in range(num_lines):
+        ax.scatter(x[p], y[p], linewidth = 0.1, label=labels[p])
 
+    ax.set_ylim([0,1.1])
+    ax.set_xlim([0,1.1])
+    ax.legend(fontsize=8)
+    ax.set_ylabel("General Fairness, $F_T$", fontsize = 12)
+    ax.set_xlabel("Performance, $f_o$", fontsize = 12)
+    plt.gcf().savefig(savepath + '_scatter_v1.png', dpi = 400)
+    return
 
 
 def averager(data, skeleton):
@@ -131,9 +162,46 @@ def averager(data, skeleton):
 
 if __name__ == "__main__":
     # Select the experiments you want to be processed by listing their file name below
-    file_names = ["FedAvg_FEMNIST_niid_205C_2PC_5E_30R",
+    file_names = [
+                  "Ditto_NSLKDD_niid_100C_5PC_5E_30R",
+                  "Ditto_NSLKDD_iid_100C_5PC_5E_30R",
+                  "q_FedAvg_NSLKDD_niid_100C_5PC_5E_30R",
+                  "q_FedAvg_NSLKDD_iid_100C_5PC_5E_30R",
+                  "FedAvg_NSLKDD_niid_100C_5PC_5E_30R",
+                  "FedAvg_NSLKDD_iid_100C_5PC_5E_30R", 
+                  "FedAvg_FEMNIST_niid_205C_2PC_5E_30R",
                   "FedAvg_FEMNIST_iid_205C_2PC_5E_30R",
+                  "Ditto_FEMNIST_niid_205C_2PC_5E_30R",
+                  "Ditto_FEMNIST_iid_205C_2PC_5E_30R",
                   "q_FedAvg_FEMNIST_niid_205C_2PC_5E_30R",
-                  "q_FedAvg_FEMNIST_iid_205C_2PC_5E_30R"
+                  "q_FedAvg_FEMNIST_iid_205C_2PC_5E_30R",
+
     ]
     main(file_names, sys.argv[1:])
+
+
+                #   "Ditto_NSLKDD_niid_100C_5PC_5E_30R",
+                #   "Ditto_NSLKDD_iid_100C_5PC_5E_30R",
+                #   "q_FedAvg_NSLKDD_niid_100C_5PC_5E_30R",
+                #   "q_FedAvg_NSLKDD_iid_100C_5PC_5E_30R",
+                #   "FedAvg_NSLKDD_niid_100C_5PC_5E_30R",
+                #   "FedAvg_NSLKDD_iid_100C_5PC_5E_30R"
+
+
+#  "Ditto_FEMNIST_niid_205C_2PC_5E_30R",
+#                   "Ditto_FEMNIST_iid_205C_2PC_5E_30R",
+#                   "q_FedAvg_FEMNIST_niid_205C_2PC_5E_30R",
+#                   "q_FedAvg_FEMNIST_iid_205C_2PC_5E_30R"
+
+
+# "FedAvg_FEMNIST_niid_205C_2PC_5E_30R",
+#                   "FedAvg_FEMNIST_iid_205C_2PC_5E_30R",
+#                   "Ditto_FEMNIST_niid_205C_2PC_5E_30R",
+#                   "Ditto_FEMNIST_iid_205C_2PC_5E_30R",
+#                   "q_FedAvg_FEMNIST_niid_205C_2PC_5E_30R",
+#                   "q_FedAvg_FEMNIST_iid_205C_2PC_5E_30R"
+
+# "FedAvg_CIFAR_niid_10C_50PC_10E_30R",
+                #   "FedAvg_CIFAR_iid_10C_50PC_10E_30R",
+                #   "q_FedAvg_CIFAR_niid_10C_50PC_10E_30R",
+                #   "q_FedAvg_CIFAR_iid_10C_50PC_10E_30R"
