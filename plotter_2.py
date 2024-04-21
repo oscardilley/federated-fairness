@@ -43,7 +43,6 @@ import sys
 def main(file_names, input_args):
     """ Main entry point"""
     NUMBER_REPEATS = 3
-    PATH = './Results/Plots/xTesting'
     temp = [None for i in range(NUMBER_REPEATS)]
     data_structure = {
     "rounds": [],
@@ -89,20 +88,22 @@ def main(file_names, input_args):
             parts.remove("q")
             parts[0] = "q-FedAvg"
         labels.append(f"{parts[0]}, {datasets[parts[1]]} {parts[2]}, {clients[parts[3]]}")
-    time_series(rounds, general_fairness, PATH, labels)
-    scatter([np.mean(i[r:]) for i in performance], [np.mean(i[r:]) for i in general_fairness], PATH, labels)
+    PATH = f'./Results/Plots/{datasets[parts[1]]}{clients[parts[3]]}'
+    time_series(rounds, general_fairness, PATH, labels, datasets[parts[1]])
+    scatter([np.mean(i[r:]) for i in performance], [np.mean(i[r:]) for i in general_fairness], PATH, labels, datasets[parts[1]])
     return
 
 
-def time_series(x, y, savepath, labels = []):
+def time_series(x, y, savepath, labels = [], dataset="XXX"):
     """ Plotting general fairness timeseries of the inputted files """
+    markers = ["p", "D", "^", "o", "s", "P"]
     num_lines = len(x)
     fig,ax = plt.subplots(1)
-    fig.suptitle("Timeseries Fairness Evaluation", fontsize = 15)
+    fig.suptitle(f"Timeseries Fairness Evaluation\n{dataset} Cross-Device", fontsize = 15)
     ax.grid(linewidth = 0.5, linestyle = "--")
     ax.set_axisbelow(True)
     for p in range(num_lines):
-        ax.scatter(x[p], y[p], linewidth = 0.1)
+        ax.scatter(x[p], y[p], s=15, marker=markers[p])
         # a,b,c,d,e,f = np.polyfit(x[p], y[p], 5)
         # ax.plot(x[p], (a*(x[p]**5)) + (b*(x[p]**4)) + (c*(x[p]**3)) + (d*(x[p]**2)) + e*x[p] + f, linewidth = 1.2, label = labels[p])
         a,b,c,d = np.polyfit(x[p], y[p], 3)
@@ -110,7 +111,7 @@ def time_series(x, y, savepath, labels = []):
         # a,b,c = np.polyfit(x[p], y[p], 2)
         # ax.plot(x[p], (a*(x[p]**2)) + b*x[p] + c, linewidth = 1.2, label = labels[p])
     ax.set_xticks([4,9,14,19,24,29], [5,10,15,20,25,30])
-    ax.set_ylim([0,1.1])
+    ax.set_ylim([0,1])
     ax.set_xlim([0, 30])
     ax.legend(fontsize = 8)
     ax.set_ylabel("General Fairness, $F_T$", fontsize = 12)
@@ -119,19 +120,19 @@ def time_series(x, y, savepath, labels = []):
     return
     
 
-def scatter(x , y , savepath, labels = []):
+def scatter(x , y , savepath, labels = [], dataset = "XXX"):
     """ Showing the performance of a range of implementations"""
+    markers = ["p", "D", "^", "o", "s", "P"]
     num_lines = len(x)
     fig,ax = plt.subplots(1)
-    fig.suptitle("Comparitive Fairness Evaluation", fontsize = 15)
+    fig.suptitle(f"Comparitive Fairness Evaluation\n{dataset} Cross-Device", fontsize = 15)
     ax.grid(linewidth = 0.5, linestyle = "--")
     ax.set_axisbelow(True)
     for p in range(num_lines):
-        ax.scatter(x[p], y[p], linewidth = 0.1, label=labels[p])
-
-    ax.set_ylim([0,1.1])
-    ax.set_xlim([0,1.1])
-    ax.legend(fontsize=8)
+        ax.scatter(x[p], y[p], s = 50, label=labels[p], marker=markers[p])
+    ax.set_ylim([0,1])
+    ax.set_xlim([0,1])
+    ax.legend(fontsize=8, loc = "lower left")
     ax.set_ylabel("General Fairness, $F_T$", fontsize = 12)
     ax.set_xlabel("Performance, $f_o$", fontsize = 12)
     plt.gcf().savefig(savepath + '_scatter_v1.png', dpi = 400)
@@ -169,39 +170,25 @@ if __name__ == "__main__":
                   "q_FedAvg_NSLKDD_iid_100C_5PC_5E_30R",
                   "FedAvg_NSLKDD_niid_100C_5PC_5E_30R",
                   "FedAvg_NSLKDD_iid_100C_5PC_5E_30R", 
-                  "FedAvg_FEMNIST_niid_205C_2PC_5E_30R",
-                  "FedAvg_FEMNIST_iid_205C_2PC_5E_30R",
-                  "Ditto_FEMNIST_niid_205C_2PC_5E_30R",
-                  "Ditto_FEMNIST_iid_205C_2PC_5E_30R",
-                  "q_FedAvg_FEMNIST_niid_205C_2PC_5E_30R",
-                  "q_FedAvg_FEMNIST_iid_205C_2PC_5E_30R",
+                #   "FedAvg_FEMNIST_niid_205C_2PC_5E_30R",
+                #   "FedAvg_FEMNIST_iid_205C_2PC_5E_30R",
+                #   "Ditto_FEMNIST_niid_205C_2PC_5E_30R",
+                #   "Ditto_FEMNIST_iid_205C_2PC_5E_30R",
+                #   "q_FedAvg_FEMNIST_niid_205C_2PC_5E_30R",
+                #   "q_FedAvg_FEMNIST_iid_205C_2PC_5E_30R",
+                #   "FedAvg_CIFAR_niid_100C_5PC_10E_30R",
+                #   "FedAvg_CIFAR_iid_100C_5PC_10E_30R",
+                #   "Ditto_CIFAR_niid_100C_5PC_10E_30R",
+                #   "Ditto_CIFAR_iid_100C_5PC_10E_30R",
+                #   "q_FedAvg_CIFAR_niid_100C_5PC_10E_30R",
+                #   "q_FedAvg_CIFAR_iid_100C_5PC_10E_30R",
+                #   "FedAvg_CIFAR_niid_10C_50PC_10E_30R",
+                #   "FedAvg_CIFAR_iid_10C_50PC_10E_30R",
+                #   "Ditto_CIFAR_niid_10C_50PC_10E_30R",
+                #   "Ditto_CIFAR_iid_10C_50PC_10E_30R",
+                #   "q_FedAvg_CIFAR_niid_10C_50PC_10E_30R",
+                #   "q_FedAvg_CIFAR_iid_10C_50PC_10E_30R",
 
     ]
     main(file_names, sys.argv[1:])
 
-
-                #   "Ditto_NSLKDD_niid_100C_5PC_5E_30R",
-                #   "Ditto_NSLKDD_iid_100C_5PC_5E_30R",
-                #   "q_FedAvg_NSLKDD_niid_100C_5PC_5E_30R",
-                #   "q_FedAvg_NSLKDD_iid_100C_5PC_5E_30R",
-                #   "FedAvg_NSLKDD_niid_100C_5PC_5E_30R",
-                #   "FedAvg_NSLKDD_iid_100C_5PC_5E_30R"
-
-
-#  "Ditto_FEMNIST_niid_205C_2PC_5E_30R",
-#                   "Ditto_FEMNIST_iid_205C_2PC_5E_30R",
-#                   "q_FedAvg_FEMNIST_niid_205C_2PC_5E_30R",
-#                   "q_FedAvg_FEMNIST_iid_205C_2PC_5E_30R"
-
-
-# "FedAvg_FEMNIST_niid_205C_2PC_5E_30R",
-#                   "FedAvg_FEMNIST_iid_205C_2PC_5E_30R",
-#                   "Ditto_FEMNIST_niid_205C_2PC_5E_30R",
-#                   "Ditto_FEMNIST_iid_205C_2PC_5E_30R",
-#                   "q_FedAvg_FEMNIST_niid_205C_2PC_5E_30R",
-#                   "q_FedAvg_FEMNIST_iid_205C_2PC_5E_30R"
-
-# "FedAvg_CIFAR_niid_10C_50PC_10E_30R",
-                #   "FedAvg_CIFAR_iid_10C_50PC_10E_30R",
-                #   "q_FedAvg_CIFAR_niid_10C_50PC_10E_30R",
-                #   "q_FedAvg_CIFAR_iid_10C_50PC_10E_30R"
