@@ -43,6 +43,11 @@ import numpy as np
 import json
 import sys
 
+plt.rcParams["font.family"] = "Times New Roman"
+# May require depending on machine
+# $ sudo apt install msttcorefonts -qq
+# $ rm ~/.cache/matplotlib -rf
+
 
 def main(strategy, dataset, setting, clients, epochs):
   """ Main entry point"""
