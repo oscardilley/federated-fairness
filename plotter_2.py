@@ -40,6 +40,11 @@ import numpy as np
 import json
 import sys
 
+plt.rcParams["font.family"] = "Times New Roman"
+# May require depending on machine
+# $ sudo apt install msttcorefonts -qq
+# $ rm ~/.cache/matplotlib -rf
+
 def main(file_names, input_args):
     """ Main entry point"""
     NUMBER_REPEATS = 3
@@ -99,7 +104,7 @@ def time_series(x, y, savepath, labels = [], dataset="XXX"):
     markers = ["p", "D", "^", "o", "s", "P"]
     num_lines = len(x)
     fig,ax = plt.subplots(1)
-    fig.suptitle(f"Timeseries Fairness Evaluation\n{dataset} Cross-Device", fontsize = 15)
+    ax.set_title(f"{dataset} Cross-Silo", fontsize = 15)
     ax.grid(linewidth = 0.5, linestyle = "--")
     ax.set_axisbelow(True)
     for p in range(num_lines):
@@ -114,8 +119,8 @@ def time_series(x, y, savepath, labels = [], dataset="XXX"):
     ax.set_ylim([0,1])
     ax.set_xlim([0, 30])
     ax.legend(fontsize = 8)
-    ax.set_ylabel("General Fairness, $F_T$", fontsize = 12)
-    ax.set_xlabel("Round", fontsize = 12)
+    ax.set_ylabel("General Fairness, $F_T$", fontsize = 14)
+    ax.set_xlabel("Round", fontsize = 14)
     plt.gcf().savefig(savepath + '_tS_v1.png', dpi = 400)
     return
     
@@ -125,16 +130,16 @@ def scatter(x , y , savepath, labels = [], dataset = "XXX"):
     markers = ["p", "D", "^", "o", "s", "P"]
     num_lines = len(x)
     fig,ax = plt.subplots(1)
-    fig.suptitle(f"Comparitive Fairness Evaluation\n{dataset} Cross-Device", fontsize = 15)
+    ax.set_title(f"{dataset} Cross-Silo", fontsize = 15)
     ax.grid(linewidth = 0.5, linestyle = "--")
     ax.set_axisbelow(True)
     for p in range(num_lines):
-        ax.scatter(x[p], y[p], s = 50, label=labels[p], marker=markers[p])
+        ax.scatter(x[p], y[p], s = 80, label=labels[p], marker=markers[p])
     ax.set_ylim([0,1])
     ax.set_xlim([0,1])
-    ax.legend(fontsize=8, loc = "lower left")
-    ax.set_ylabel("General Fairness, $F_T$", fontsize = 12)
-    ax.set_xlabel("Performance, $f_o$", fontsize = 12)
+    ax.legend(fontsize=10, loc = "lower left")
+    ax.set_ylabel("General Fairness, $F_T$", fontsize = 14)
+    ax.set_xlabel("Performance, $f_o$", fontsize = 14)
     plt.gcf().savefig(savepath + '_scatter_v1.png', dpi = 400)
     return
 
@@ -164,30 +169,30 @@ def averager(data, skeleton):
 if __name__ == "__main__":
     # Select the experiments you want to be processed by listing their file name below
     file_names = [
-                  "Ditto_NSLKDD_niid_100C_5PC_5E_30R",
-                  "Ditto_NSLKDD_iid_100C_5PC_5E_30R",
-                  "q_FedAvg_NSLKDD_niid_100C_5PC_5E_30R",
-                  "q_FedAvg_NSLKDD_iid_100C_5PC_5E_30R",
-                  "FedAvg_NSLKDD_niid_100C_5PC_5E_30R",
-                  "FedAvg_NSLKDD_iid_100C_5PC_5E_30R", 
-                #   "FedAvg_FEMNIST_niid_205C_2PC_5E_30R",
+                #   "FedAvg_NSLKDD_iid_100C_5PC_5E_30R", 
+                #   "FedAvg_NSLKDD_niid_100C_5PC_5E_30R",
+                #   "Ditto_NSLKDD_iid_100C_5PC_5E_30R",
+                #   "Ditto_NSLKDD_niid_100C_5PC_5E_30R",
+                #   "q_FedAvg_NSLKDD_iid_100C_5PC_5E_30R",
+                #   "q_FedAvg_NSLKDD_niid_100C_5PC_5E_30R",
                 #   "FedAvg_FEMNIST_iid_205C_2PC_5E_30R",
-                #   "Ditto_FEMNIST_niid_205C_2PC_5E_30R",
+                #   "FedAvg_FEMNIST_niid_205C_2PC_5E_30R",
                 #   "Ditto_FEMNIST_iid_205C_2PC_5E_30R",
-                #   "q_FedAvg_FEMNIST_niid_205C_2PC_5E_30R",
+                #   "Ditto_FEMNIST_niid_205C_2PC_5E_30R",
                 #   "q_FedAvg_FEMNIST_iid_205C_2PC_5E_30R",
-                #   "FedAvg_CIFAR_niid_100C_5PC_10E_30R",
+                #   "q_FedAvg_FEMNIST_niid_205C_2PC_5E_30R",
                 #   "FedAvg_CIFAR_iid_100C_5PC_10E_30R",
-                #   "Ditto_CIFAR_niid_100C_5PC_10E_30R",
+                #   "FedAvg_CIFAR_niid_100C_5PC_10E_30R",
                 #   "Ditto_CIFAR_iid_100C_5PC_10E_30R",
-                #   "q_FedAvg_CIFAR_niid_100C_5PC_10E_30R",
+                #   "Ditto_CIFAR_niid_100C_5PC_10E_30R",
                 #   "q_FedAvg_CIFAR_iid_100C_5PC_10E_30R",
-                #   "FedAvg_CIFAR_niid_10C_50PC_10E_30R",
-                #   "FedAvg_CIFAR_iid_10C_50PC_10E_30R",
-                #   "Ditto_CIFAR_niid_10C_50PC_10E_30R",
-                #   "Ditto_CIFAR_iid_10C_50PC_10E_30R",
-                #   "q_FedAvg_CIFAR_niid_10C_50PC_10E_30R",
-                #   "q_FedAvg_CIFAR_iid_10C_50PC_10E_30R",
+                #   "q_FedAvg_CIFAR_niid_100C_5PC_10E_30R",
+                  "FedAvg_CIFAR_iid_10C_50PC_10E_30R",
+                  "FedAvg_CIFAR_niid_10C_50PC_10E_30R",
+                  "Ditto_CIFAR_iid_10C_50PC_10E_30R",
+                  "Ditto_CIFAR_niid_10C_50PC_10E_30R",
+                  "q_FedAvg_CIFAR_iid_10C_50PC_10E_30R",
+                  "q_FedAvg_CIFAR_niid_10C_50PC_10E_30R",
 
     ]
     main(file_names, sys.argv[1:])
