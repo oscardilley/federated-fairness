@@ -91,13 +91,15 @@ def main(strategy, dataset, setting, clients, epochs):
       # Average the results and store in data
   data = averager(temp, data_structure)
   figure_path = f'./Results/Plots/{STRATEGY}_{DATASET}_{SETTING}_{CLIENTS}C'
+  if STRATEGY == "q_FedAvg":
+    STRATEGY = "q-FedAvg"
   # Initialising plotter:
   plotter = FairnessEval(rounds = data["rounds"],
                         f_j = data["general_fairness"]["f_j"],
                         f_g = data["general_fairness"]["f_g"],
                         f_r = data["general_fairness"]["f_r"],
                         f_o = data["general_fairness"]["f_o"],
-                        plot_string = f"{STRATEGY}, {DATASET}, {SETTING}, $\mu_s={round((5 / CLIENTS) * 100 , 1)}$%, $C={CLIENTS}$"
+                        plot_string = f"{STRATEGY}, {DATASET}, {SETTING}, $\mu_s$={round((5 / CLIENTS) * 100 , 1)}%, $C$={CLIENTS}"
                         )
   # Producing Plots
   plotter.bar(figure_path, r)
@@ -152,7 +154,7 @@ class FairnessEval():
       ax.set_axisbelow(True)
       general_fairness = np.mean(np.array([self.f_j[r:], self.f_g[r:], self.f_r[r:], self.f_o[r:]]))
       ax.axhline(general_fairness, linewidth = 1.5, color='k', linestyle='--')
-      ax.annotate(f"$F_T$={round(general_fairness,2)}", [3.29, general_fairness + 0.015])
+      ax.annotate(f"$F_T$={round(general_fairness,2)}", [3.29, general_fairness + 0.015], fontsize=12)
       box = ax.boxplot([self.f_j[r:], self.f_g[r:], self.f_r[r:], self.f_o[r:]], notch = False, patch_artist=True, labels=self.labels, sym="+")
       for median, whisker, cap in zip(box['medians'], box['whiskers'], box['caps']):
           median.set_color("k")
@@ -164,9 +166,10 @@ class FairnessEval():
       for patch, colour in zip(box['boxes'], [self.colour[0], self.colour[2], self.colour[3], self.colour[4]]):
           patch.set_facecolor(colour)
           patch.set_linewidth(1.3)
-      ax.set_xlabel("Fairness Notions", fontsize = 12)
-      ax.set_ylabel("Normalised Fairness", fontsize = 12)
-      ax.set_title(self.plot_string, fontsize = 12)
+      ax.set_xlabel("Fairness Notions", fontsize = 14)
+      ax.set_xticklabels(labels=ax.get_xticklabels(), fontsize=12)
+      ax.set_ylabel("Normalised Fairness", fontsize = 14)
+      ax.set_title(self.plot_string, fontsize = 15)
       ax.set_ylim([0,1.1])
       plt.gcf().savefig(path + '_bar_v2.png', dpi = 400)
       return
@@ -196,11 +199,11 @@ class FairnessEval():
       # ax.fill_between(self.rounds, data[int(layers[0][0])], color = self.colour[int(layers[0][0])], alpha = 0.3)
       labels = [l for l in self.labels]
       labels.append("Mean Fairness, $F_T$")
-      ax.legend(labels, fontsize = 8)
-      ax.set_xlabel("Round", fontsize = 12)
+      ax.legend(labels, fontsize = 10)
+      ax.set_xlabel("Round", fontsize = 14)
       ax.set_xticks([4,9,14,19,24,29], [5,10,15,20,25,30])
-      ax.set_ylabel("Normalised Fairness", fontsize = 12)
-      ax.set_title(self.plot_string, fontsize = 12)
+      ax.set_ylabel("Normalised Fairness", fontsize = 14)
+      ax.set_title(self.plot_string, fontsize = 15)
       ax.set_ylim([0,1.1])
       ax.set_xlim([min(self.rounds), max(self.rounds)])
       plt.gcf().savefig(path + '_tS_v1.png', dpi = 400)

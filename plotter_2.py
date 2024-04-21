@@ -118,7 +118,7 @@ def time_series(x, y, savepath, labels = [], dataset="XXX"):
     ax.set_xticks([4,9,14,19,24,29], [5,10,15,20,25,30])
     ax.set_ylim([0,1])
     ax.set_xlim([0, 30])
-    ax.legend(fontsize = 8)
+    ax.legend(fontsize = 10)
     ax.set_ylabel("General Fairness, $F_T$", fontsize = 14)
     ax.set_xlabel("Round", fontsize = 14)
     plt.gcf().savefig(savepath + '_tS_v1.png', dpi = 400)
