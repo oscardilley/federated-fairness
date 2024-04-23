@@ -106,26 +106,29 @@ Federated learning comes in many flavours. In order to constrain the scope, this
 ~~~bash
 ├── LICENSE
 ├── README.md
+├── requirements.txt
 ├── Results
-│   ├── Ditto_CIFAR_iid_100C_5PC_10E_30R_v1.json
-│   ├── ...
-│   │   <.json results files>
-│   ├── ...
-│   ├── q_FedAvg_NSLKDD_niid_100C_5PC_5E_30R_v3.json
-│   ├── Old
-│   │   └── archived .json results
-│   ├── Plots
-│   │   ├── Ditto_CIFAR_iid_100C_bar.png
-│   │   ├── ...
-│   │   │   <.png result images>
-│   │   ├── ...
-│   │   └── q_FedAvg_NSLKDD_niid_100C_tS.png
+    ├── Ditto_CIFAR_iid_100C_5PC_10E_30R_v1.json
+    ├── ...
+    │   <.json results files - 3 per experiment>
+    ├── ...
+    ├── q_FedAvg_NSLKDD_niid_100C_5PC_5E_30R_v3.json
+    └── Plots
+        ├── Ditto_CIFAR_iid_100C_bar.png
+        ├── ...
+        │   <.png result images>
+        ├── ...
+        └── q_FedAvg_NSLKDD_niid_100C_tS.png
 ├── ditto_cifar_iid_100c_v1.py
 ├── ...
 ├── <individual experiment .py files>
 ├── ...
 ├── q_fedavg_nslkdd_niid_100c_v1.py
 ├── plotter_v1.py
+├── plotter_v2.py
+├── femnist 
+    ├── femnist_iid_loaded.pickle
+    └── femnist_niid_loaded.pickle
 └── source 
     ├── cifar_net.py 
     ├── client.py
@@ -135,8 +138,8 @@ Federated learning comes in many flavours. In order to constrain the scope, this
     ├── load_cifar.py
     ├── load_nslkdd.py
     ├── nslkdd_net.py
+    ├── FEMNIST_loading.ipynb
     └── shapley.py
-
 ~~~
 
 
