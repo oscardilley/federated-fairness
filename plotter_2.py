@@ -86,18 +86,19 @@ def main(file_names, input_args):
         #labels.append(f"{parts[0]}, {datasets[parts[1]]} {parts[2]}, {clients[parts[3]]}")
         labels.append(f"{parts[0]}, {parts[2]}")
     PATH = f'./Results/Plots/{datasets[parts[1]]}{clients[parts[3]]}'
-    time_series(rounds, general_fairness, PATH, labels, datasets[parts[1]])
+    time_series(rounds, general_fairness, PATH, labels=labels, dataset=datasets[parts[1]], clients=clients_int[parts[3]])
     scatter([np.mean(i[r:]) for i in performance], [np.mean(i[r:]) for i in general_fairness], 
                 PATH, labels=labels, dataset=datasets[parts[1]], clients=clients_int[parts[3]])
     return
 
 
-def time_series(x, y, savepath, labels = [], dataset="XXX"):
+def time_series(x, y, savepath, labels = [], dataset="XXX", clients=1):
     """ Plotting general fairness timeseries of the inputted files """
     markers = ["p", "D", "^", "o", "s", "P"]
     num_lines = len(x)
     fig,ax = plt.subplots(1)
-    ax.set_title(f"{dataset} Cross-Device", fontsize = 15)
+    fig.suptitle(f"{dataset} Cross-Silo", fontsize = 15)
+    ax.set_title(f"$\mu_s$={round((5 / clients) * 100 , 1)}%, $C$={clients}", fontsize = 12)
     ax.grid(linewidth = 0.5, linestyle = "--")
     ax.set_axisbelow(True)
     for p in range(num_lines):
@@ -123,7 +124,7 @@ def scatter(x , y , savepath, labels = [], dataset = "XXX", clients=1):
     markers = ["p", "D", "^", "o", "s", "P"]
     num_lines = len(x)
     fig,ax = plt.subplots(1)
-    fig.suptitle(f"{dataset} Cross-Device", fontsize = 15)
+    fig.suptitle(f"{dataset} Cross-Silo", fontsize = 15)
     ax.set_title(f"$\mu_s$={round((5 / clients) * 100 , 1)}%, $C$={clients}", fontsize = 12)
     ax.grid(linewidth = 0.5, linestyle = "--")
     ax.set_axisbelow(True)
@@ -163,12 +164,12 @@ def averager(data, skeleton):
 if __name__ == "__main__":
     # Select the experiments you want to be processed by listing their file name below
     file_names = [
-                  "FedAvg_NSLKDD_iid_100C_5PC_5E_30R", 
-                  "FedAvg_NSLKDD_niid_100C_5PC_5E_30R",
-                  "Ditto_NSLKDD_iid_100C_5PC_5E_30R",
-                  "Ditto_NSLKDD_niid_100C_5PC_5E_30R",
-                  "q_FedAvg_NSLKDD_iid_100C_5PC_5E_30R",
-                  "q_FedAvg_NSLKDD_niid_100C_5PC_5E_30R",
+                #   "FedAvg_NSLKDD_iid_100C_5PC_5E_30R", 
+                #   "FedAvg_NSLKDD_niid_100C_5PC_5E_30R",
+                #   "Ditto_NSLKDD_iid_100C_5PC_5E_30R",
+                #   "Ditto_NSLKDD_niid_100C_5PC_5E_30R",
+                #   "q_FedAvg_NSLKDD_iid_100C_5PC_5E_30R",
+                #   "q_FedAvg_NSLKDD_niid_100C_5PC_5E_30R",
                 #   "FedAvg_FEMNIST_iid_205C_2PC_5E_30R",
                 #   "FedAvg_FEMNIST_niid_205C_2PC_5E_30R",
                 #   "Ditto_FEMNIST_iid_205C_2PC_5E_30R",
@@ -181,12 +182,12 @@ if __name__ == "__main__":
                 #   "Ditto_CIFAR_niid_100C_5PC_10E_30R",
                 #   "q_FedAvg_CIFAR_iid_100C_5PC_10E_30R",
                 #   "q_FedAvg_CIFAR_niid_100C_5PC_10E_30R",
-                #   "FedAvg_CIFAR_iid_10C_50PC_10E_30R",
-                #   "FedAvg_CIFAR_niid_10C_50PC_10E_30R",
-                #   "Ditto_CIFAR_iid_10C_50PC_10E_30R",
-                #   "Ditto_CIFAR_niid_10C_50PC_10E_30R",
-                #   "q_FedAvg_CIFAR_iid_10C_50PC_10E_30R",
-                #   "q_FedAvg_CIFAR_niid_10C_50PC_10E_30R",
+                  "FedAvg_CIFAR_iid_10C_50PC_10E_30R",
+                  "FedAvg_CIFAR_niid_10C_50PC_10E_30R",
+                  "Ditto_CIFAR_iid_10C_50PC_10E_30R",
+                  "Ditto_CIFAR_niid_10C_50PC_10E_30R",
+                  "q_FedAvg_CIFAR_iid_10C_50PC_10E_30R",
+                  "q_FedAvg_CIFAR_niid_10C_50PC_10E_30R",
 
     ]
     main(file_names, sys.argv[1:])
