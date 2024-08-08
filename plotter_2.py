@@ -97,7 +97,7 @@ def time_series(x, y, savepath, labels = [], dataset="XXX"):
     markers = ["p", "D", "^", "o", "s", "P"]
     num_lines = len(x)
     fig,ax = plt.subplots(1)
-    ax.set_title(f"{dataset} Cross-Silo", fontsize = 15)
+    ax.set_title(f"{dataset} Cross-Device", fontsize = 15)
     ax.grid(linewidth = 0.5, linestyle = "--")
     ax.set_axisbelow(True)
     for p in range(num_lines):
@@ -123,7 +123,7 @@ def scatter(x , y , savepath, labels = [], dataset = "XXX", clients=1):
     markers = ["p", "D", "^", "o", "s", "P"]
     num_lines = len(x)
     fig,ax = plt.subplots(1)
-    fig.suptitle(f"{dataset} Cross-Silo", fontsize = 15)
+    fig.suptitle(f"{dataset} Cross-Device", fontsize = 15)
     ax.set_title(f"$\mu_s$={round((5 / clients) * 100 , 1)}%, $C$={clients}", fontsize = 12)
     ax.grid(linewidth = 0.5, linestyle = "--")
     ax.set_axisbelow(True)
