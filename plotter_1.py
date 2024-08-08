@@ -144,7 +144,7 @@ class FairnessEval():
       ax.set_axisbelow(True)
       general_fairness = np.mean(np.array([self.f_j[r:], self.f_g[r:], self.f_r[r:], self.f_o[r:]]))
       ax.axhline(general_fairness, linewidth = 1.5, color='k', linestyle='--')
-      ax.annotate(f"$F_T$={round(general_fairness,2)}", [3.29, general_fairness + 0.015], fontsize=12)
+      ax.annotate(f"$F_T$={round(general_fairness,2)}", [3.27, general_fairness + 0.015], fontsize=12)
       box = ax.boxplot([self.f_j[r:], self.f_g[r:], self.f_r[r:], self.f_o[r:]], notch = False, patch_artist=True, labels=self.labels, sym="+")
       for median, whisker, cap in zip(box['medians'], box['whiskers'], box['caps']):
           median.set_color("k")
@@ -159,7 +159,7 @@ class FairnessEval():
       ax.set_xlabel("Fairness Notions", fontsize = 14)
       ax.set_xticklabels(labels=ax.get_xticklabels(), fontsize=12)
       ax.set_ylabel("Normalised Fairness", fontsize = 14)
-      ax.set_title(self.plot_string, fontsize = 15)
+      ax.set_title(self.plot_string, fontsize = 12)
       ax.set_ylim([0,1.1])
       plt.gcf().savefig(path + '_bar_v2.png', dpi = 400)
       return
@@ -193,7 +193,7 @@ class FairnessEval():
       ax.set_xlabel("Round", fontsize = 14)
       ax.set_xticks([4,9,14,19,24,29], [5,10,15,20,25,30])
       ax.set_ylabel("Normalised Fairness", fontsize = 14)
-      ax.set_title(self.plot_string, fontsize = 15)
+      ax.set_title(self.plot_string, fontsize = 12)
       ax.set_ylim([0,1.1])
       ax.set_xlim([min(self.rounds), max(self.rounds)])
       plt.gcf().savefig(path + '_tS_v1.png', dpi = 400)
