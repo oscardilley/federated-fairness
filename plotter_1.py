@@ -144,7 +144,7 @@ class FairnessEval():
       ax.set_axisbelow(True)
       general_fairness = np.mean(np.array([self.f_j[r:], self.f_g[r:], self.f_r[r:], self.f_o[r:]]))
       ax.axhline(general_fairness, linewidth = 1.5, color='k', linestyle='--')
-      ax.annotate(f"$F_T$={round(general_fairness,2)}", [3.27, general_fairness + 0.015], fontsize=12)
+      ax.annotate(f"$F_T$={round(general_fairness,2)}", [3.24, general_fairness + 0.015], fontsize=12)
       box = ax.boxplot([self.f_j[r:], self.f_g[r:], self.f_r[r:], self.f_o[r:]], notch = False, patch_artist=True, labels=self.labels, sym="+")
       for median, whisker, cap in zip(box['medians'], box['whiskers'], box['caps']):
           median.set_color("k")
