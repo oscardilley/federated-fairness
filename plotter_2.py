@@ -10,16 +10,6 @@ MatPlotLib Plotting Script for creating plots that compare different experiments
 
 -------------------------------------------------------------------------------------------------------------
 
-Declarations, functions and classes:
-- 
-
--------------------------------------------------------------------------------------------------------------
-
-Usage:
-
-
--------------------------------------------------------------------------------------------------------------
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -40,7 +30,7 @@ import numpy as np
 import json
 import sys
 
-plt.rcParams["font.family"] = "Times New Roman"
+#plt.rcParams["font.family"] = "Times New Roman"
 # May require depending on machine
 # $ sudo apt install msttcorefonts -qq
 # $ rm ~/.cache/matplotlib -rf
@@ -87,15 +77,18 @@ def main(file_names, input_args):
     # Label processing from filename using underscore delimitter:
     datasets = {"CIFAR": "CIFAR-10", "FEMNIST": "FEMNIST", "NSLKDD": "NSL-KDD"}
     clients = {"10C": "10 Clients", "100C": "100 Clients", "205C": "205 Clients"}
+    clients_int = {"10C": 10, "100C": 100, "205C": 205}
     for file in file_names:
         parts = file.split("_")
         if parts[0] == "q":
             parts.remove("q")
             parts[0] = "q-FedAvg"
-        labels.append(f"{parts[0]}, {datasets[parts[1]]} {parts[2]}, {clients[parts[3]]}")
+        #labels.append(f"{parts[0]}, {datasets[parts[1]]} {parts[2]}, {clients[parts[3]]}")
+        labels.append(f"{parts[0]}, {parts[2]}")
     PATH = f'./Results/Plots/{datasets[parts[1]]}{clients[parts[3]]}'
     time_series(rounds, general_fairness, PATH, labels, datasets[parts[1]])
-    scatter([np.mean(i[r:]) for i in performance], [np.mean(i[r:]) for i in general_fairness], PATH, labels, datasets[parts[1]])
+    scatter([np.mean(i[r:]) for i in performance], [np.mean(i[r:]) for i in general_fairness], 
+                PATH, labels=labels, dataset=datasets[parts[1]], clients=clients_int[parts[3]])
     return
 
 
@@ -119,22 +112,23 @@ def time_series(x, y, savepath, labels = [], dataset="XXX"):
     ax.set_ylim([0,1])
     ax.set_xlim([0, 30])
     ax.legend(fontsize = 10)
-    ax.set_ylabel("General Fairness, $F_T$", fontsize = 14)
+    ax.set_ylabel("General Fairness, $f_T$", fontsize = 14)
     ax.set_xlabel("Round", fontsize = 14)
     plt.gcf().savefig(savepath + '_tS_v1.png', dpi = 400)
     return
     
 
-def scatter(x , y , savepath, labels = [], dataset = "XXX"):
+def scatter(x , y , savepath, labels = [], dataset = "XXX", clients=1):
     """ Showing the performance of a range of implementations"""
     markers = ["p", "D", "^", "o", "s", "P"]
     num_lines = len(x)
     fig,ax = plt.subplots(1)
-    ax.set_title(f"{dataset} Cross-Silo", fontsize = 15)
+    fig.suptitle(f"{dataset} Cross-Silo", fontsize = 15)
+    ax.set_title(f"$\mu_s$={round((5 / clients) * 100 , 1)}%, $C$={clients}", fontsize = 12)
     ax.grid(linewidth = 0.5, linestyle = "--")
     ax.set_axisbelow(True)
     for p in range(num_lines):
-        ax.scatter(x[p], y[p], s = 80, label=labels[p], marker=markers[p])
+        ax.scatter(x[p], y[p], s = 100, label=labels[p], marker=markers[p])
     ax.set_ylim([0,1])
     ax.set_xlim([0,1])
     ax.legend(fontsize=10, loc = "lower left")
@@ -169,12 +163,12 @@ def averager(data, skeleton):
 if __name__ == "__main__":
     # Select the experiments you want to be processed by listing their file name below
     file_names = [
-                #   "FedAvg_NSLKDD_iid_100C_5PC_5E_30R", 
-                #   "FedAvg_NSLKDD_niid_100C_5PC_5E_30R",
-                #   "Ditto_NSLKDD_iid_100C_5PC_5E_30R",
-                #   "Ditto_NSLKDD_niid_100C_5PC_5E_30R",
-                #   "q_FedAvg_NSLKDD_iid_100C_5PC_5E_30R",
-                #   "q_FedAvg_NSLKDD_niid_100C_5PC_5E_30R",
+                  "FedAvg_NSLKDD_iid_100C_5PC_5E_30R", 
+                  "FedAvg_NSLKDD_niid_100C_5PC_5E_30R",
+                  "Ditto_NSLKDD_iid_100C_5PC_5E_30R",
+                  "Ditto_NSLKDD_niid_100C_5PC_5E_30R",
+                  "q_FedAvg_NSLKDD_iid_100C_5PC_5E_30R",
+                  "q_FedAvg_NSLKDD_niid_100C_5PC_5E_30R",
                 #   "FedAvg_FEMNIST_iid_205C_2PC_5E_30R",
                 #   "FedAvg_FEMNIST_niid_205C_2PC_5E_30R",
                 #   "Ditto_FEMNIST_iid_205C_2PC_5E_30R",
@@ -187,12 +181,12 @@ if __name__ == "__main__":
                 #   "Ditto_CIFAR_niid_100C_5PC_10E_30R",
                 #   "q_FedAvg_CIFAR_iid_100C_5PC_10E_30R",
                 #   "q_FedAvg_CIFAR_niid_100C_5PC_10E_30R",
-                  "FedAvg_CIFAR_iid_10C_50PC_10E_30R",
-                  "FedAvg_CIFAR_niid_10C_50PC_10E_30R",
-                  "Ditto_CIFAR_iid_10C_50PC_10E_30R",
-                  "Ditto_CIFAR_niid_10C_50PC_10E_30R",
-                  "q_FedAvg_CIFAR_iid_10C_50PC_10E_30R",
-                  "q_FedAvg_CIFAR_niid_10C_50PC_10E_30R",
+                #   "FedAvg_CIFAR_iid_10C_50PC_10E_30R",
+                #   "FedAvg_CIFAR_niid_10C_50PC_10E_30R",
+                #   "Ditto_CIFAR_iid_10C_50PC_10E_30R",
+                #   "Ditto_CIFAR_niid_10C_50PC_10E_30R",
+                #   "q_FedAvg_CIFAR_iid_10C_50PC_10E_30R",
+                #   "q_FedAvg_CIFAR_niid_10C_50PC_10E_30R",
 
     ]
     main(file_names, sys.argv[1:])
